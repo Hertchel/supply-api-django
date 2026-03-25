@@ -57,13 +57,14 @@ SIMPLE_JWT = {
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173", "https://supply-management-system.netlify.app", "https://jhay-lhord.github.io/login-system-v2/"
+    "http://localhost:5173", "https://supply-management-system.netlify.app"
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173", "https://supply-management-system.netlify.app", "https://jhay-lhord.github.io/login-system-v2/"
+    "http://localhost:5173", "https://supply-management-system.netlify.app"
 ]
 
+ALLOWED_HOSTS = ['*']
 AUTH_USER_MODEL = 'api.CustomUser'
 
 EMAIL_HOST = os.getenv('EMAIL_HOST')
@@ -71,7 +72,8 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_USE_TLS = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Application definition
 
@@ -87,7 +89,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'api.middleware.AuthenticatedUserMiddleware',
+    #'api.middleware.AuthenticatedUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
