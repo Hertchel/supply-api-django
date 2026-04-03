@@ -41,21 +41,42 @@ SIMPLE_JWT = {
     'AUTH_COOKIE': 'access_token',
     'AUTH_COOKIE_HTTP_ONLY': True,
     'AUTH_COOKIE_SECURE': os.getenv('AUTH_COOKIE_SECURE', 'False').lower() in ['true', '1', 't'],
-    'AUTH_COOKIE_SAMESITE': 'Strict',
+    # FIXED: Change SameSite to 'None' for cross-domain production
+    'AUTH_COOKIE_SAMESITE': 'None' if not DEBUG else 'Strict',
     'CSRF_COOKIE_SECURE': os.getenv('CSRF_COOKIE_SECURE', 'False').lower() in ['true', '1', 't'],
     'SESSION_COOKIE_SECURE': os.getenv('SESSION_COOKIE_SECURE', 'False').lower() in ['true', '1', 't'],
+    # FIXED: Add CSRF cookie SameSite
+    'CSRF_COOKIE_SAMESITE': 'None' if not DEBUG else 'Lax',
+    'CSRF_COOKIE_HTTP_ONLY': False,  # Allow JavaScript to read CSRF token
 }
 
+# FIXED: CORS Settings - Add your Render frontend URL
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
     "https://supply-management-system.netlify.app",
+    "https://supply-frontend-react.onrender.com", 
 ]
 
+# FIXED: Add any additional allowed origins for Render preview branches
+CORS_ALLOW_ALL_ORIGINS = False  # Keep False for security
+
+# FIXED: CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
     "https://supply-management-system.netlify.app",
+    # ADD YOUR RENDER FRONTEND URL HERE:
+    "https://your-frontend-app.onrender.com",  # <--- REPLACE with your actual frontend URL
 ]
+
+# FIXED: Add CSRF cookie settings for cross-domain
+CSRF_COOKIE_SECURE = not DEBUG  # True in production
+CSRF_COOKIE_HTTP_ONLY = False
+CSRF_COOKIE_SAMESITE = 'None' if not DEBUG else 'Lax'
+CSRF_USE_SESSIONS = False
+CSRF_COOKIE_NAME = 'csrftoken'
 
 AUTH_USER_MODEL = 'api.CustomUser'
 
