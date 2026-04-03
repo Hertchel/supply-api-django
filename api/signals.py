@@ -11,12 +11,28 @@ logger = logging.getLogger(__name__)
 
 def create_update_activity(sender, instance, created, **kwargs):
     user = get_current_user()
+    
+    # Add null check for user
+    if user is None:
+        logger.warning(f"No user found for {sender.__name__} {'Added' if created else 'Updated'} action - skipping activity creation")
+        return
+    
+    # Check if user is authenticated
+    try:
+        is_authenticated = user.is_authenticated if hasattr(user, 'is_authenticated') else False
+        if not is_authenticated:
+            logger.warning(f"User {user} is not authenticated - skipping activity creation")
+            return
+    except Exception as e:
+        logger.error(f"Error checking user authentication: {e}")
+        return
+    
     user_role = get_user_role(user)
     logger.info(f"create_update_activity signal triggered for {sender.__name__}. User: {user}")
     activity_type = 'Added' if created else 'Updated'
     content_type = ContentType.objects.get_for_model(instance)
     
-    if user:  
+    try:
         RecentActivity.objects.create(  
             user=user,
             user_role=user_role,
@@ -25,18 +41,34 @@ def create_update_activity(sender, instance, created, **kwargs):
             object_id=instance.pk,
         )
         logger.info(f"RecentActivity created for {activity_type} action by {user}")
-    else:
-        logger.warning(f"No user found for {sender.__name__} {activity_type} action")
+    except Exception as e:
+        logger.error(f"Error creating RecentActivity: {e}")
 
 def delete_activity(sender, instance, **kwargs):
     user = get_current_user()
+    
+    # Add null check for user
+    if user is None:
+        logger.warning(f"No user found for {sender.__name__} DELETE action - skipping activity creation")
+        return
+    
+    # Check if user is authenticated
+    try:
+        is_authenticated = user.is_authenticated if hasattr(user, 'is_authenticated') else False
+        if not is_authenticated:
+            logger.warning(f"User {user} is not authenticated - skipping activity creation")
+            return
+    except Exception as e:
+        logger.error(f"Error checking user authentication: {e}")
+        return
+    
     user_role = get_user_role(user)
 
     logger.info(f"delete_activity signal triggered for {sender.__name__}. User: {user}")
 
     content_type = ContentType.objects.get_for_model(instance)
     
-    if user:
+    try:
         RecentActivity.objects.create(
             user=user,
             user_role=user_role,
@@ -45,8 +77,8 @@ def delete_activity(sender, instance, **kwargs):
             object_id=instance.pk,
         )
         logger.info(f"RecentActivity created for DELETE action by {user}")
-    else:
-        logger.warning(f"No user found for {sender.__name__} DELETE action")
+    except Exception as e:
+        logger.error(f"Error creating RecentActivity for DELETE: {e}")
 
 # List of model names to include in the recent activity
 # Updated to use correct spelling
@@ -63,20 +95,33 @@ for model_name in models_to_track:
     
 @receiver(post_save, sender=PurchaseRequest)
 def update_status_on_save(sender, instance, **kwargs):
+    # Add null check for instance
+    if instance is None:
+        logger.warning("PurchaseRequest instance is None - skipping status update")
+        return
+    
     # Get the dynamic description based on the status
-    description = instance.get_status_description()
+    try:
+        description = instance.get_status_description()
+    except Exception as e:
+        logger.error(f"Error getting status description: {e}")
+        description = "Status updated"
     
     # Check if the status has changed
     # Check if the most recent status for this PR No is the same as the current status
-    latest_status = TrackStatus.objects.filter(pr_no=instance).order_by('-updated_at').first()
-    
-    if latest_status and latest_status.status == instance.status:
-        print("Status is the same as the latest. Skipping duplicate status entry.")
-        return  # Don't create a duplicate if the status hasn't changed
-    
-    # Update or create the corresponding Status object
-    TrackStatus.objects.create(
-        pr_no=instance,  # Link to the PurchaseRequest
-        status=instance.status,
-        description=description,
-    )
+    try:
+        latest_status = TrackStatus.objects.filter(pr_no=instance).order_by('-updated_at').first()
+        
+        if latest_status and latest_status.status == instance.status:
+            print("Status is the same as the latest. Skipping duplicate status entry.")
+            return  # Don't create a duplicate if the status hasn't changed
+        
+        # Update or create the corresponding Status object
+        TrackStatus.objects.create(
+            pr_no=instance,  # Link to the PurchaseRequest
+            status=instance.status,
+            description=description,
+        )
+        logger.info(f"TrackStatus created for PR {instance.pr_no} with status {instance.status}")
+    except Exception as e:
+        logger.error(f"Error creating TrackStatus: {e}")

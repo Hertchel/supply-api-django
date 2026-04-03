@@ -150,7 +150,7 @@ elif ENVIRONMENT == 'test':
             'PORT': os.getenv('TEST_PORT'),
         }
     }
-    print(f"✅ Using TEST database: {os.getenv('DB_TEST_NAME')}")
+    print(f" Using TEST database: {os.getenv('DB_TEST_NAME')}")
 
 # Production (Render/Supabase - PostgreSQL)
 else:
@@ -162,13 +162,13 @@ else:
             conn_max_age=600,
             ssl_require=True
         )
-        print("✅ Using PostgreSQL via DATABASE_URL (Production)")
+        print(" Using PostgreSQL via DATABASE_URL (Production)")
     else:
         # Fallback to individual PostgreSQL settings
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.getenv('TIDB_DB_NAME'),  # Reuse TiDB env vars or create new ones
+                'NAME': os.getenv('TIDB_DB_NAME'),  
                 'USER': os.getenv('TIDB_USER'),
                 'PASSWORD': os.getenv('TIDB_PASSWORD'),
                 'HOST': os.getenv('TIDB_HOST'),
