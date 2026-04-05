@@ -32,10 +32,15 @@ def send_mail_resend(receiver, subject, html):
         
         # Check if domain is configured
         if not sender_domain_name:
+            print("===============================================\n")
+            print("===============================================\n")
+            print("===============================================\n")
             print(f"\n⚠️  EMAIL DISABLED - No DOMAIN_NAME configured")
             print(f"TO: {receiver}")
             print(f"SUBJECT: {subject}")
-            print("================================\n")
+            print("===============================================\n")
+            print("===============================================\n")
+            print("===============================================\n")
             return {"message": "Email disabled - No domain configured"}
         
         try:

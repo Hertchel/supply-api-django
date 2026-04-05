@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.conf import settings
-
+from .models import FundCluster, Office
+# Serializers for the API endpoints, including user registration, login, and data representation for various models.
 from .groups import assign_role_and_save
 from .models import *
 
@@ -155,6 +156,17 @@ class RequesitionerSerializer(serializers.ModelSerializer):
         model = Requesitioner
         fields = '__all__'
 
+# The FundClusterSerializer and OfficeSerializer are added to provide structured data representation for the FundCluster and Office models, which can be used in API responses and requests to ensure consistency and clarity when dealing with fund clusters and offices in the context of purchase requests.
+class FundClusterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FundCluster
+        fields = ['id', 'code', 'name', 'description']
+
+
+class OfficeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Office
+        fields = ['id', 'code', 'name', 'department']
 
 class PurchaseRequestSerializer(serializers.ModelSerializer):
     requisitioner = serializers.PrimaryKeyRelatedField(queryset=Requesitioner.objects.all())
@@ -163,13 +175,21 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
     campus_director = serializers.PrimaryKeyRelatedField(queryset=CampusDirector.objects.all())
     campus_director_details = CampusDirectorSerializer(source='campus_director', read_only=True)
 
+    fund_cluster = serializers.PrimaryKeyRelatedField(queryset=FundCluster.objects.all())
+    fund_cluster_details = FundClusterSerializer(source='fund_cluster', read_only=True)
+    
+    office = serializers.PrimaryKeyRelatedField(queryset=Office.objects.all())
+    office_details = OfficeSerializer(source='office', read_only=True)
+
     class Meta:
         model = PurchaseRequest
         fields = [
             'pr_no', 
             'res_center_code', 
             'fund_cluster',
+            'fund_cluster_details',
             'office',
+            'office_details',
             'purpose', 
             'status', 
             'requisitioner', 

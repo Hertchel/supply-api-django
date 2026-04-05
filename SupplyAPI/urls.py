@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from api.views import ActivateUserAPIView, LoginTokenObtainPairView, OTPVerificationView, RegisterUserAPIView, LoginTokenOfflineView, CheckAuthView, RefreshTokenView, LogoutView, ResendOTPView
+from api.views import ActivateUserAPIView, LoginTokenObtainPairView, OTPVerificationView, RegisterUserAPIView, LoginTokenOfflineView, CheckAuthView, RefreshTokenView, LogoutView, ResendOTPView, FundClusterListView, OfficeListView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -16,4 +16,7 @@ urlpatterns = [
     path('api/user/login_resend_otp/', ResendOTPView.as_view(), name='verify_otp'),
     path('api/token/refresh/', RefreshTokenView.as_view(), name='token'),
     path('api/', include('api.urls')),
+    # Additional API endpoints for fund clusters and offices, allowing clients to retrieve lists of available fund clusters and offices, which can be used in the context of purchase requests to ensure that users select valid options for these fields.
+    path('api/fund-clusters/', FundClusterListView.as_view(), name='fund-clusters'),
+    path('api/offices/', OfficeListView.as_view(), name='offices'),
 ]

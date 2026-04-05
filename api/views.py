@@ -20,6 +20,10 @@ from datetime import timedelta
 from django.utils.timezone import now
 from django.db.models.functions import TruncDate
 from django.db.models import Count
+#fund cluster and office imports
+from rest_framework import generics, permissions
+from .models import FundCluster, Office
+from .serializers import FundClusterSerializer, OfficeSerializer
 
 from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
@@ -1095,3 +1099,16 @@ class RequisitionIssueSlipDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RequisitionIssueSlipSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+# Views for Fund Cluster and Office List
+
+class FundClusterListView(generics.ListAPIView):
+    queryset = FundCluster.objects.filter(is_active=True)
+    serializer_class = FundClusterSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class OfficeListView(generics.ListAPIView):
+    queryset = Office.objects.filter(is_active=True)
+    serializer_class = OfficeSerializer
+    permission_classes = [permissions.IsAuthenticated]

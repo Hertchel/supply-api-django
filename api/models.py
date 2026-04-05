@@ -103,7 +103,7 @@ class PurchaseRequest(models.Model):
     pr_no = models.CharField(max_length=50, primary_key=True)
     res_center_code = models.CharField(max_length=50, null=True, blank=True)
     office = models.CharField(max_length=200)
-    fund_cluster = models.CharField(max_length=50, null=True, blank=True)
+    #fund_cluster = models.CharField(max_length=50, null=True, blank=True)
     purpose = models.CharField(max_length=255)
     status = models.CharField(max_length=255, default='Pending for Approval')
     requisitioner = models.ForeignKey(Requesitioner, related_name="purchase_requests", on_delete=models.CASCADE)
@@ -112,6 +112,23 @@ class PurchaseRequest(models.Model):
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # The fund_cluster and office fields are updated to be ForeignKey relationships to the FundCluster and Office models, allowing for better data integrity and easier querying of related data.
+    fund_cluster = models.ForeignKey(
+        'FundCluster', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='purchase_requests'
+    )
+    
+    office = models.ForeignKey(
+        'Office',  
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='purchase_requests'
+    )
 
     STATUS_DESCRIPTIONS = {
         "Pending for Approval": "The purchase request has been submitted and is awaiting review and approval.",
@@ -360,3 +377,33 @@ class BACMember(models.Model):
 
     def __str__(self):
         return self.name
+
+# The FundCluster and Office models are added to provide structured data for the fund clusters and offices, which can be linked to purchase requests for better data integrity and easier querying.
+class FundCluster(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    class Meta:
+        ordering = ['code']
+
+
+class Office(models.Model):
+    code = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=255)
+    department = models.CharField(max_length=255, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+    class Meta:
+        ordering = ['code']
