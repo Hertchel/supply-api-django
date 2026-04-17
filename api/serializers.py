@@ -181,6 +181,17 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
     office = serializers.PrimaryKeyRelatedField(queryset=Office.objects.all())
     office_details = OfficeSerializer(source='office', read_only=True)
 
+    reviewed_by = serializers.PrimaryKeyRelatedField(
+    queryset=Requesitioner.objects.all(),
+    required=False,
+    allow_null=True
+    )
+
+    reviewed_by_details = RequesitionerSerializer(
+        source='reviewed_by',
+        read_only=True
+    )
+
     class Meta:
         model = PurchaseRequest
         fields = [
@@ -194,6 +205,8 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             'status', 
             'requisitioner', 
             'requisitioner_details', 
+            'reviewed_by',                 
+            'reviewed_by_details',        
             'campus_director', 
             'campus_director_details', 
             'mode_of_procurement', 
