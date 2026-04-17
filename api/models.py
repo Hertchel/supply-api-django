@@ -102,8 +102,8 @@ class CampusDirector(models.Model):
 class PurchaseRequest(models.Model):
     pr_no = models.CharField(max_length=50, primary_key=True)
     res_center_code = models.CharField(max_length=50, null=True, blank=True)
-    office = models.CharField(max_length=200)
-    # fund_cluster = models.CharField(max_length=50, null=True, blank=True)
+   # office = models.CharField(max_length=200)
+    fund_cluster = models.CharField(max_length=50, null=True, blank=True)
     purpose = models.CharField(max_length=255)
     status = models.CharField(max_length=255, default='Pending for Approval')
     requisitioner = models.ForeignKey(Requesitioner, related_name="purchase_requests", on_delete=models.CASCADE)
@@ -114,12 +114,12 @@ class PurchaseRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     reviewed_by = models.ForeignKey(
-    Requesitioner,
-    on_delete=models.SET_NULL,
-    null=True,
-    blank=True,
-    related_name='reviewed_requests'
-)
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_requests'
+    )
 
 #    fund_cluster = models.ForeignKey(
 #        'FundCluster', 

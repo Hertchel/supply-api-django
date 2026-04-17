@@ -175,22 +175,32 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
     campus_director = serializers.PrimaryKeyRelatedField(queryset=CampusDirector.objects.all())
     campus_director_details = CampusDirectorSerializer(source='campus_director', read_only=True)
 
-    fund_cluster = serializers.PrimaryKeyRelatedField(queryset=FundCluster.objects.all())
+    fund_cluster = serializers.CharField(
+    required=False,
+    allow_null=True,
+    allow_blank=True
+    )
     fund_cluster_details = FundClusterSerializer(source='fund_cluster', read_only=True)
     
     office = serializers.PrimaryKeyRelatedField(queryset=Office.objects.all())
     office_details = OfficeSerializer(source='office', read_only=True)
 
     reviewed_by = serializers.PrimaryKeyRelatedField(
-    queryset=Requesitioner.objects.all(),
+    queryset=User.objects.all(),
     required=False,
     allow_null=True
     )
 
-    reviewed_by_details = RequesitionerSerializer(
-        source='reviewed_by',
-        read_only=True
-    )
+    reviewed_by_details = serializers.SerializerMethodField()
+
+    def get_reviewed_by_details(self, obj):
+        if obj.reviewed_by:
+            return {
+                "id": obj.reviewed_by.id,
+                "name": f"{obj.reviewed_by.first_name} {obj.reviewed_by.last_name}",
+                "email": obj.reviewed_by.email
+            }
+        return None
 
     class Meta:
         model = PurchaseRequest
