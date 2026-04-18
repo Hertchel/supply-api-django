@@ -180,7 +180,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
     allow_null=True,
     allow_blank=True
     )
-    fund_cluster_details = FundClusterSerializer(source='fund_cluster', read_only=True)
+    # fund_cluster_details = FundClusterSerializer(source='fund_cluster', read_only=True)
     
     office = serializers.PrimaryKeyRelatedField(queryset=Office.objects.all())
     office_details = OfficeSerializer(source='office', read_only=True)
@@ -208,7 +208,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             'pr_no', 
             'res_center_code', 
             'fund_cluster',
-            'fund_cluster_details',
+            # 'fund_cluster_details',
             'office',
             'office_details',
             'purpose', 
