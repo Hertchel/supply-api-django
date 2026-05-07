@@ -184,11 +184,6 @@ class OfficeSerializer(serializers.ModelSerializer):
 
 class RequisitionerItemSerializer(serializers.ModelSerializer):
 
-    item_name = serializers.CharField(
-        source='item_name',
-        read_only=True
-    )
-
     estimated_cost = serializers.SerializerMethodField()
 
     class Meta:
