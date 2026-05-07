@@ -19,4 +19,7 @@ urlpatterns = [
     # Additional API endpoints for fund clusters and offices, allowing clients to retrieve lists of available fund clusters and offices, which can be used in the context of purchase requests to ensure that users select valid options for these fields.
     path('api/fund-clusters/', FundClusterListView.as_view(), name='fund-clusters'),
     path('api/offices/', OfficeListView.as_view(), name='offices'),
+
+    path('api/', include('api.urls')),
+    
 ]
