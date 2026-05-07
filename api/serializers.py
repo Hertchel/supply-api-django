@@ -10,6 +10,13 @@ from .models import *
 
 from .models import CustomUser
 
+from .models import (
+    Item,
+    Supplier,
+    SupplierItem,
+    AbstractOfQuotation
+)
+
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
@@ -175,62 +182,161 @@ class OfficeSerializer(serializers.ModelSerializer):
         model = Office
         fields = ['id', 'code', 'name', 'department']
 
-class PurchaseRequestSerializer(serializers.ModelSerializer):
-    requisitioner = serializers.PrimaryKeyRelatedField(queryset=Requesitioner.objects.all())
-    requisitioner_details = RequesitionerSerializer(source='requisitioner', read_only=True)
+class RequisitionerItemSerializer(serializers.ModelSerializer):
 
-    campus_director = serializers.PrimaryKeyRelatedField(queryset=CampusDirector.objects.all())
-    campus_director_details = CampusDirectorSerializer(source='campus_director', read_only=True)
+    item_name = serializers.CharField(
+        source='item_name',
+        read_only=True
+    )
+
+    estimated_cost = serializers.SerializerMethodField()
+
+    class Meta:
+
+        model = Item
+
+        fields = [
+            'item_no',
+            'item_name',
+            'quantity',
+            'estimated_cost'
+        ]
+
+    def get_estimated_cost(self, obj):
+
+        return getattr(obj, 'estimated_cost', 0)
+
+class PurchaseRequestSerializer(serializers.ModelSerializer):
+
+    requisitioner = serializers.PrimaryKeyRelatedField(
+        queryset=Requesitioner.objects.all()
+    )
+
+    requisitioner_details = RequesitionerSerializer(
+        source='requisitioner',
+        read_only=True
+    )
+
+    campus_director = serializers.PrimaryKeyRelatedField(
+        queryset=CampusDirector.objects.all()
+    )
+
+    campus_director_details = CampusDirectorSerializer(
+        source='campus_director',
+        read_only=True
+    )
 
     fund_cluster = serializers.CharField(
-    required=False,
-    allow_null=True,
-    allow_blank=True
+        required=False,
+        allow_null=True,
+        allow_blank=True
     )
-    # fund_cluster_details = FundClusterSerializer(source='fund_cluster', read_only=True)
-    
-    office = serializers.PrimaryKeyRelatedField(queryset=Office.objects.all())
-    office_details = OfficeSerializer(source='office', read_only=True)
+
+    office = serializers.PrimaryKeyRelatedField(
+        queryset=Office.objects.all()
+    )
+
+    office_details = OfficeSerializer(
+        source='office',
+        read_only=True
+    )
 
     reviewed_by = serializers.PrimaryKeyRelatedField(
-    queryset=User.objects.all(),
-    required=False,
-    allow_null=True
+        queryset=User.objects.all(),
+        required=False,
+        allow_null=True
     )
 
     reviewed_by_details = serializers.SerializerMethodField()
 
-    def get_reviewed_by_details(self, obj):
-        if obj.reviewed_by:
-            return {
-                "id": obj.reviewed_by.id,
-                "name": f"{obj.reviewed_by.first_name} {obj.reviewed_by.last_name}",
-                "email": obj.reviewed_by.email
-            }
-        return None
+    items = serializers.SerializerMethodField()
+
+    supplier_name = serializers.SerializerMethodField()
+
+    winning_bidder = serializers.SerializerMethodField()
 
     class Meta:
+
         model = PurchaseRequest
+
         fields = [
-            'pr_no', 
-            'res_center_code', 
+            'pr_no',
+            'res_center_code',
             'fund_cluster',
-            # 'fund_cluster_details',
             'office',
             'office_details',
-            'purpose', 
-            'status', 
-            'requisitioner', 
-            'requisitioner_details', 
-            'reviewed_by',                 
-            'reviewed_by_details',        
-            'campus_director', 
-            'campus_director_details', 
-            'mode_of_procurement', 
-            'total_amount', 
-            'created_at', 
-            'updated_at'
+            'purpose',
+            'status',
+            'requisitioner',
+            'requisitioner_details',
+            'reviewed_by',
+            'reviewed_by_details',
+            'campus_director',
+            'campus_director_details',
+            'mode_of_procurement',
+            'total_amount',
+            'created_at',
+            'updated_at',
+
+            # NEW
+            'items',
+            'supplier_name',
+            'winning_bidder'
         ]
+
+    def get_reviewed_by_details(self, obj):
+
+        if obj.reviewed_by:
+
+            return {
+                "id": obj.reviewed_by.id,
+                "name":
+                f"{obj.reviewed_by.first_name} "
+                f"{obj.reviewed_by.last_name}",
+                "email": obj.reviewed_by.email
+            }
+
+        return None
+
+    def get_items(self, obj):
+
+        items = Item.objects.filter(
+            purchase_request=obj
+        )
+
+        return RequisitionerItemSerializer(
+            items,
+            many=True
+        ).data
+
+    def get_supplier_name(self, obj):
+
+        supplier_item = SupplierItem.objects.filter(
+            rfq__purchase_request=obj
+        ).first()
+
+        if supplier_item and supplier_item.supplier:
+            return supplier_item.supplier.name
+
+        return None
+
+    def get_winning_bidder(self, obj):
+
+        aoq = AbstractOfQuotation.objects.filter(
+            purchase_request=obj
+        ).first()
+
+        if not aoq:
+            return None
+
+        supplier_item = SupplierItem.objects.filter(
+            supplier__aoq=aoq
+        ).first()
+
+        if supplier_item and supplier_item.supplier:
+            return supplier_item.supplier.name
+
+        return None
         
 class ItemSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)
