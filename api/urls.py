@@ -3,6 +3,8 @@ from django.urls import path
 from .views import *
 from django.urls import re_path
 
+from django.urls import path, include
+
 urlpatterns = [
     path('requisitioner/', RequisitionerList.as_view()),
     path('requisitioner/<str:pk>', RequisitionerDetail.as_view()),
@@ -86,5 +88,6 @@ urlpatterns = [
 
     re_path(r"^rfq/(?P<rfq_no>.+)/full/$", RFQDetailView.as_view()),
     
+    path('api/ai/', include('ai.urls')),
 
 ]
