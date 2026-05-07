@@ -1,48 +1,47 @@
-from api.models import StockItems
+from collections import defaultdict
+
 from api.models import Item
 
 
 def generate_purchase_recommendations():
 
+    item_usage = defaultdict(int)
+
+    items = Item.objects.all()
+
+    for item in items:
+
+        item_usage[
+            item.item_description
+        ] += int(item.quantity)
+
     recommendations = []
 
-    stock_items = StockItems.objects.all()
+    for item_name, total_quantity in item_usage.items():
 
-    for stock in stock_items:
+        if total_quantity >= 5:
 
-        item_name = (
-            stock.supplier_item
-            .item_quotation
-            .item
-            .item_description
-        )
-
-        current_stock = stock.quantity_on_hand
-
-        usage_count = Item.objects.filter(
-            item_description=item_name
-        ).count()
-
-        reorder_point = usage_count * 2
-
-        if current_stock <= reorder_point:
-
-            suggested_order = (
-                reorder_point
-                - current_stock
-                + 10
+            recommended_order = (
+                total_quantity + 10
             )
 
             recommendations.append({
 
                 "item": item_name,
 
-                "current_stock": current_stock,
-
-                "monthly_usage": usage_count,
+                "monthly_usage":
+                    total_quantity,
 
                 "recommended_order":
-                    suggested_order
+                    recommended_order,
+
+                "reason":
+                    "High procurement demand"
             })
 
-    return recommendations
+    recommendations.sort(
+        key=lambda x: x["monthly_usage"],
+        reverse=True
+    )
+
+    return recommendationse
