@@ -1,40 +1,77 @@
 import pandas as pd
-from sklearn.linear_model import LinearRegression
 import numpy as np
 
-from procurement.models import PurchaseRequest
+from sklearn.linear_model import LinearRegression
 
-def forecast_item_demand(item_id):
+from api.models import Item
 
-    requests = PurchaseRequest.objects.filter(
-        item_id=item_id
-    ).order_by('created_at')
 
-    if requests.count() < 2:
+def forecast_item_demand():
+
+    items = Item.objects.all().order_by(
+        "created_at"
+    )
+
+    if items.count() < 2:
+
         return {
-            "forecast": "Not enough data"
+            "message":
+                "Not enough historical data"
         }
 
     data = []
 
-    for index, req in enumerate(requests):
-        data.append([
-            index,
-            req.quantity
-        ])
+    for index, item in enumerate(items):
 
-    df = pd.DataFrame(data, columns=['month', 'quantity'])
+        try:
 
-    X = df[['month']]
-    y = df['quantity']
+            quantity = float(item.quantity)
+
+        except Exception:
+
+            quantity = 0
+
+        data.append({
+
+            "month": index + 1,
+
+            "quantity": quantity,
+
+            "item":
+                item.item_description
+        })
+
+    df = pd.DataFrame(data)
+
+    X = df[["month"]]
+
+    y = df["quantity"]
 
     model = LinearRegression()
+
     model.fit(X, y)
 
-    future_month = [[len(df) + 1]]
+    future_month = np.array([
+        [len(df) + 1]
+    ])
 
-    prediction = model.predict(future_month)
+    prediction = model.predict(
+        future_month
+    )
 
     return {
-        "predicted_demand": round(prediction[0], 2)
-    }
+
+        "historical_records":
+            len(df),
+
+        "predicted_next_month_demand":
+            round(
+                float(prediction[0]),
+                2
+            ),
+
+        "trend":
+            "Increasing procurement demand"
+            if prediction[0] > y.mean()
+            else "Stable procurement demand"
+    }   

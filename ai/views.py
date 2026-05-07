@@ -1,6 +1,14 @@
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from .services.anomaly_service import (
+    detect_anomalies
+
+)
+
+from .services.forecast_service import (
+    forecast_item_demand
+)
 
 from .services.recommendation_service import (
     generate_purchase_recommendations
@@ -20,24 +28,17 @@ class AIRecommendationView(APIView):
 
 class AIForecastView(APIView):
 
-    def get(self, request, item_id):
+    def get(self, request):
 
-        return Response({
-            "item_id": item_id,
-            "predicted_demand": 35
-        })
+        forecast = forecast_item_demand()
 
+        return Response(forecast)
+    
 
 class AIAnomalyView(APIView):
 
     def get(self, request):
 
-        anomalies = [
-            {
-                "item": "Laptop",
-                "requested_quantity": 100,
-                "reason": "Unusually high request"
-            }
-        ]
+        anomalies = detect_anomalies()
 
         return Response(anomalies)

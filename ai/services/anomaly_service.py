@@ -1,33 +1,64 @@
-from procurement.models import PurchaseRequest
+from statistics import mean
+
+from api.models import Item
+
 
 def detect_anomalies():
 
-    requests = PurchaseRequest.objects.all()
+    items = Item.objects.all()
 
-    anomalies = []
+    quantities = []
 
-    average_quantity = 0
+    for item in items:
 
-    total = 0
+        try:
 
-    for req in requests:
-        total += req.quantity
+            quantities.append(
+                float(item.quantity)
+            )
 
-    if requests.count() > 0:
-        average_quantity = total / requests.count()
+        except Exception:
+
+            pass
+
+    if not quantities:
+
+        return []
+
+    average_quantity = mean(quantities)
 
     threshold = average_quantity * 3
 
-    for req in requests:
+    anomalies = []
 
-        if req.quantity > threshold:
+    for item in items:
+
+        try:
+
+            quantity = float(item.quantity)
+
+        except Exception:
+
+            quantity = 0
+
+        if quantity >= threshold:
 
             anomalies.append({
-                "pr_number": req.pr_no,
-                "item": req.item.item_name,
-                "requested_quantity": req.quantity,
-                "average_quantity": average_quantity,
-                "reason": "Unusually high request"
+
+                "item":
+                    item.item_description,
+
+                "requested_quantity":
+                    quantity,
+
+                "average_quantity":
+                    round(average_quantity, 2),
+
+                "reason":
+                    "Unusually high procurement quantity",
+
+                "purchase_request":
+                    item.purchase_request.pr_no
             })
 
     return anomalies

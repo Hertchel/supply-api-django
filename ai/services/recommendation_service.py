@@ -1,19 +1,28 @@
 from collections import defaultdict
+from decimal import Decimal
 
 from api.models import Item
 
 
 def generate_purchase_recommendations():
 
-    item_usage = defaultdict(int)
+    item_usage = defaultdict(float)
 
     items = Item.objects.all()
 
     for item in items:
 
+        try:
+
+            quantity = float(item.quantity)
+
+        except Exception:
+
+            quantity = 0
+
         item_usage[
             item.item_description
-        ] += int(item.quantity)
+        ] += quantity
 
     recommendations = []
 
@@ -30,10 +39,10 @@ def generate_purchase_recommendations():
                 "item": item_name,
 
                 "monthly_usage":
-                    total_quantity,
+                    round(total_quantity, 2),
 
                 "recommended_order":
-                    recommended_order,
+                    round(recommended_order, 2),
 
                 "reason":
                     "High procurement demand"
@@ -44,4 +53,4 @@ def generate_purchase_recommendations():
         reverse=True
     )
 
-    return recommendationse
+    return recommendations

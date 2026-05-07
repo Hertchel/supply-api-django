@@ -14,7 +14,7 @@ urlpatterns = [
     ),
 
     path(
-        'forecast/<int:item_id>/',
+        'forecast/',
         AIForecastView.as_view()
     ),
 
