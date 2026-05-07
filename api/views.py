@@ -34,7 +34,8 @@ from .filters import *
 from .models import *
 
 from .resend import send_mail_resend, send_file
-from .utils import send_otp_email
+
+#from .utils import send_otp_email
 
 from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
@@ -171,10 +172,9 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             user = serializer.user
 
             #Temporary solution to send OTP email before generating token
-            send_otp_email(user)
+            #send_otp_email(user)
 
             #This will be used when domain is available and we can send email with activation link
-            """
             # generate OTP
             user.generate_otp()
 
@@ -183,7 +183,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
 
             # send_OTP_mail(user.email, subject, message_html )
             send_mail_resend(user.email, subject, message_html)
-            """
+
 
             return Response({'message': f"We've sent a verification code to {user.email}. Please check your inbox and verify your account.", 'email': user.email}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -296,11 +296,11 @@ class ResendOTPView(APIView):
                 # generate new OTP
                 user.generate_otp()
 
-                subject = 'Your OTP Code'
-                message_html = f'<p>Your new OTP code is <strong>{user.otp_code}</strong>. It is valid for 5 minutes.</p>'
-
-                # send_OTP_mail(user.email, subject, message_html )
-                send_mail_resend(user.email, subject, message_html)
+                print(
+                    f"[OTP RESEND] "
+                    f"{user.email} -> "
+                    f"{user.otp_code}"
+                )
 
                 return Response({
                     'message': 'OTP has been resent to your email address.'
