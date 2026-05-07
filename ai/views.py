@@ -1,25 +1,21 @@
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
+
+from .services.recommendation_service import (
+    generate_purchase_recommendations
+)
 
 
 class AIRecommendationView(APIView):
 
     def get(self, request):
 
-        data = [
-            {
-                "item": "Bond Paper",
-                "current_stock": 10,
-                "recommended_order": 50
-            },
-            {
-                "item": "Printer Ink",
-                "current_stock": 5,
-                "recommended_order": 20
-            }
-        ]
+        recommendations = (
+            generate_purchase_recommendations()
+        )
 
-        return Response(data)
+        return Response(recommendations)
 
 
 class AIForecastView(APIView):
