@@ -32,7 +32,10 @@ from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import *
 from .models import *
+
 from .resend import send_mail_resend, send_file
+from .utils import send_otp_email
+
 from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
 from dotenv import load_dotenv
@@ -167,6 +170,11 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             serializer.is_valid(raise_exception=True)
             user = serializer.user
 
+            #Temporary solution to send OTP email before generating token
+            send_otp_email(user)
+
+            #This will be used when domain is available and we can send email with activation link
+            """
             # generate OTP
             user.generate_otp()
 
@@ -175,6 +183,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
 
             # send_OTP_mail(user.email, subject, message_html )
             send_mail_resend(user.email, subject, message_html)
+            """
 
             return Response({'message': f"We've sent a verification code to {user.email}. Please check your inbox and verify your account.", 'email': user.email}, status=status.HTTP_200_OK)
         except Exception as e:

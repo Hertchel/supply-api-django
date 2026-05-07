@@ -2,6 +2,11 @@ import threading
 import logging
 from django.contrib.auth.models import AnonymousUser
 
+import pyotp
+
+from django.conf import settings
+from django.core.mail import send_mail
+
 logger = logging.getLogger(__name__)
 
 _thread_locals = threading.local()
@@ -77,3 +82,33 @@ def is_authenticated():
     except Exception as e:
         logger.error(f"Error checking authentication: {str(e)}")
         return False
+
+def send_otp_email(user):
+
+    if not user.otp_secret:
+
+        user.otp_secret = (
+            pyotp.random_base32()
+        )
+
+    otp = user.generate_otp()
+
+    subject = "Your OTP Verification Code"
+
+    message = (
+        f"Hello {user.first_name},\n\n"
+        f"Your OTP code is: {otp}\n\n"
+        f"This code expires in 5 minutes."
+    )
+
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        [user.email],
+        fail_silently=False,
+    )
+
+    user.save()
+
+    return otp
