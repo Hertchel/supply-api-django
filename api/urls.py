@@ -88,6 +88,6 @@ urlpatterns = [
 
     re_path(r"^rfq/(?P<rfq_no>.+)/full/$", RFQDetailView.as_view()),
     
-    path('api/ai/', include('ai.urls')),
+    path('ai/', include('ai.urls')),
 
 ]
