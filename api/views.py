@@ -511,6 +511,61 @@ class RequisitionerList(generics.ListCreateAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+class PublicRequisitionerList(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+
+        requisitioners = Requesitioner.objects.all()
+
+        serializer = RequesitionerSerializer(
+            requisitioners,
+            many=True
+        )
+
+        return Response(serializer.data)
+    
+class RequisitionerDashboardView(APIView):
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, token):
+
+        try:
+
+            requisitioner = Requesitioner.objects.get(
+                access_token=token
+            )
+
+        except Requesitioner.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Invalid requisitioner token"
+                },
+                status=404
+            )
+
+        purchase_requests = PurchaseRequest.objects.filter(
+            requisitioner=requisitioner
+        ).order_by('-created_at')
+
+        serializer = PurchaseRequestSerializer(
+            purchase_requests,
+            many=True
+        )
+
+        return Response({
+            "requisitioner": {
+                "name": requisitioner.name,
+                "department": requisitioner.department,
+                "designation": requisitioner.designation,
+            },
+            "purchase_requests": serializer.data
+        })
 
 class RequisitionerDetail(generics.RetrieveUpdateDestroyAPIView):
     """

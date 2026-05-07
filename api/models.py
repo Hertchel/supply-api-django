@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+import uuid
 
 
 class CustomUserManager(BaseUserManager):
@@ -86,12 +87,38 @@ class RecentActivity(models.Model):
 
 
 class Requesitioner(models.Model):
-    requisition_id = models.CharField(max_length=50, primary_key=True)
+    requisition_id = models.CharField(
+        max_length=50,
+        primary_key=True
+    )
+
     name = models.CharField(max_length=255)
+
     gender = models.CharField(max_length=50)
+
     department = models.CharField(max_length=100)
+
     designation = models.CharField(max_length=150)
-    created_at = models.DateTimeField(auto_now_add=True)
+
+    # NEW
+    access_token = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
+    )
+
+    # NEW
+    device_subscription = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class CampusDirector(models.Model):
