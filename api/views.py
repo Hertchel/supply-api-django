@@ -1110,6 +1110,28 @@ class InspectionAndAcceptanceList(generics.ListCreateAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+
+        inspection = serializer.save()
+
+        purchase_request = inspection.purchase_request
+
+        supplier_items = SupplierItem.objects.filter(
+            rfq=inspection.purchase_order.request_for_quotation
+        )
+
+        for supplier_item in supplier_items:
+
+            DeliveredItems.objects.create(
+                delivery_id=f"DEL-{supplier_item.supplier_item_no}",
+                purchase_request=purchase_request,
+                inspection=inspection,
+                supplier_item=supplier_item,
+                quantity_delivered=supplier_item.item_quantity,
+                is_complete=True,
+                is_partial=False
+            )
+
 
 class InspectionAndAcceptanceDetail(generics.RetrieveUpdateDestroyAPIView):
     """
