@@ -184,6 +184,7 @@ class OfficeSerializer(serializers.ModelSerializer):
 
 class RequisitionerItemSerializer(serializers.ModelSerializer):
 
+
     estimated_cost = serializers.SerializerMethodField()
 
     class Meta:
@@ -192,9 +193,11 @@ class RequisitionerItemSerializer(serializers.ModelSerializer):
 
         fields = [
             'item_no',
-            'item_name',
+            'item_description',
             'quantity',
-            'estimated_cost'
+            'unit',
+            'unit_cost',
+            'total_cost'
         ]
 
     def get_estimated_cost(self, obj):
