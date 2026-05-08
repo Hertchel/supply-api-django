@@ -822,25 +822,36 @@ class PurchaseRequestStatusUpdateView(APIView):
                     first_supplier_item = winning_supplier_items.first()
 
                     # create purchase order
+                    po_count = PurchaseOrder.objects.count() + 1
+
+                    po_no = f"PO-{timezone.now().year}-{po_count:04d}"
+
                     purchase_order = PurchaseOrder.objects.create(
+                        po_no=po_no,
                         purchase_request=purchase_request,
                         request_for_quotation=first_supplier_item.rfq,
                         abstract_of_quotation=aoq,
                         supplier=first_supplier_item.supplier,
                         total_amount=sum([
-                            float(item.item_cost)
+                            item.total_amount
                             for item in winning_supplier_items
                         ]),
                         status="In Progress"
                     )
 
                     # create purchase order items
-                    for supplier_item in winning_supplier_items:
+                    for index, supplier_item in enumerate(winning_supplier_items, start=1):
+
+                        po_item_no = f"POITEM-{timezone.now().year}-{index:04d}"
 
                         PurchaseOrderItem.objects.create(
-                            purchase_order=purchase_order,
+                            po_item_no=po_item_no,
                             purchase_request=purchase_request,
-                            supplier_item=supplier_item
+                            purchase_order=purchase_order,
+                            supplier_item=supplier_item,
+                            quantity_ordered=supplier_item.item_quantity,
+                            unit_price=supplier_item.item_cost,
+                            total_price=supplier_item.total_amount
                         )
 
             serializer = PurchaseRequestSerializer(
