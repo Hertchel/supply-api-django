@@ -1,6 +1,8 @@
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
-from django.db import IntegrityError
+
+from django.db import IntegrityError, transaction
+
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, status
@@ -772,6 +774,107 @@ class PurchaseRequestStatusUpdateView(APIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
+    def patch(self, request, pk):
+
+        try:
+
+            purchase_request = PurchaseRequest.objects.get(pk=pk)
+
+            new_status = request.data.get("status")
+
+            # =========================================
+            # FORWARD TO SUPPLY LOGIC
+            # =========================================
+            if new_status == "Ready to Order":
+
+                # prevent duplicate PO creation
+                existing_po = PurchaseOrder.objects.filter(
+                    purchase_request=purchase_request
+                ).first()
+
+                if not existing_po:
+
+                    # get AOQ
+                    aoq = AbstractOfQuotation.objects.filter(
+                        purchase_request=purchase_request
+                    ).first()
+
+                    if not aoq:
+                        return Response(
+                            {"error": "AOQ not found"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    # get winning supplier items only
+                    winning_supplier_items = SupplierItem.objects.filter(
+                        supplier__aoq_details=aoq,
+                        item_quotation__is_low_price=True
+                    )
+
+                    if not winning_supplier_items.exists():
+                        return Response(
+                            {"error": "No winning supplier items found"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+
+                    # use first supplier item for PO relations
+                    first_supplier_item = winning_supplier_items.first()
+
+                    # create purchase order
+                    purchase_order = PurchaseOrder.objects.create(
+                        purchase_request=purchase_request,
+                        request_for_quotation=first_supplier_item.rfq,
+                        abstract_of_quotation=aoq,
+                        supplier=first_supplier_item.supplier,
+                        total_amount=sum([
+                            float(item.item_cost)
+                            for item in winning_supplier_items
+                        ]),
+                        status="In Progress"
+                    )
+
+                    # create purchase order items
+                    for supplier_item in winning_supplier_items:
+
+                        PurchaseOrderItem.objects.create(
+                            purchase_order=purchase_order,
+                            purchase_request=purchase_request,
+                            supplier_item=supplier_item
+                        )
+
+            serializer = PurchaseRequestSerializer(
+                purchase_request,
+                data=request.data,
+                partial=True
+            )
+
+            if serializer.is_valid():
+
+                purchase_request.updated_at = timezone.now()
+
+                purchase_request.save()
+
+                serializer.save()
+
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_200_OK
+                )
+
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        except PurchaseRequest.DoesNotExist:
+
+            return Response(
+                {"error": "Purchase Request not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    """
     def patch(self, request, pk):
         try:
             purchase_request = PurchaseRequest.objects.get(pk=pk)
@@ -784,6 +887,7 @@ class PurchaseRequestStatusUpdateView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except PurchaseRequest.DoesNotExist:
             return Response({"error": "Purchase Order not found"}, status=status.HTTP_404_NOT_FOUND)
+    """
         
 
 class ItemsFilterListView(ListAPIView):
