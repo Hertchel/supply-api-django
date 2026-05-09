@@ -862,11 +862,9 @@ class PurchaseRequestStatusUpdateView(APIView):
 
             if serializer.is_valid():
 
-                purchase_request.updated_at = timezone.now()
-
-                purchase_request.save()
-
-                serializer.save()
+                serializer.save(
+                    updated_at=timezone.now()
+                )
 
                 return Response(
                     serializer.data,
@@ -1196,7 +1194,8 @@ class InspectionAndAcceptanceList(generics.ListCreateAPIView):
         purchase_request = inspection.purchase_request
 
         supplier_items = SupplierItem.objects.filter(
-            rfq=inspection.purchase_order.request_for_quotation
+            supplier=inspection.purchase_order.supplier,
+            item_quotation__is_low_price=True
         )
 
         for supplier_item in supplier_items:
