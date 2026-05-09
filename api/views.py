@@ -818,6 +818,13 @@ class PurchaseRequestStatusUpdateView(APIView):
                         item_quotation__is_low_price=True
                     )
 
+                    print("AOQ:", aoq)
+                    print("SUPPLIERS:", Supplier.objects.filter(aoq=aoq))
+                    print("SELECTED:", Supplier.objects.filter(
+                        aoq=aoq,
+                        is_added=True
+                    ))
+
                     if not winning_supplier_items.exists():
                         return Response(
                             {"error": "No winning supplier items found"},
