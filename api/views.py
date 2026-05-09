@@ -862,9 +862,11 @@ class PurchaseRequestStatusUpdateView(APIView):
 
             if serializer.is_valid():
 
-                serializer.save(
-                    updated_at=timezone.now()
-                )
+                purchase_request.updated_at = timezone.now()
+
+                purchase_request.save()
+
+                serializer.save()
 
                 return Response(
                     serializer.data,
