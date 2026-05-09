@@ -1194,8 +1194,7 @@ class InspectionAndAcceptanceList(generics.ListCreateAPIView):
         purchase_request = inspection.purchase_request
 
         supplier_items = SupplierItem.objects.filter(
-            supplier=inspection.purchase_order.supplier,
-            item_quotation__is_low_price=True
+            rfq=inspection.purchase_order.request_for_quotation
         )
 
         for supplier_item in supplier_items:
