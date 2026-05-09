@@ -743,8 +743,11 @@ class PurchaseRequestUpdateView(APIView):
             serializer = PurchaseRequestSerializer(purchase_request, data=request.data, partial=True)
             if serializer.is_valid():
                 purchase_request.updated_at = timezone.now()
-                purchase_request.save()
-                serializer.save()
+                # purchase_request.save()
+                serializer.save(
+                    updated_at=timezone.now()
+                )
+                # serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except PurchaseRequest.DoesNotExist:
@@ -761,8 +764,11 @@ class PurchaseRequestMOPUpdateView(APIView):
             serializer = PurchaseRequestSerializer(purchase_request, data=request.data, partial=True)
             if serializer.is_valid():
                 purchase_request.updated_at = timezone.now()
-                purchase_request.save()
-                serializer.save()
+                # purchase_request.save()
+                serializer.save(
+                    updated_at=timezone.now()
+                )
+                # serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except PurchaseRequest.DoesNotExist:
@@ -842,7 +848,9 @@ class PurchaseRequestStatusUpdateView(APIView):
                     # create purchase order items
                     for index, supplier_item in enumerate(winning_supplier_items, start=1):
 
-                        po_item_no = f"POITEM-{timezone.now().year}-{index:04d}"
+                        po_item_count = PurchaseOrderItem.objects.count() + 1
+
+                        po_item_no = f"POITEM-{timezone.now().year}-{po_item_count:04d}"
 
                         PurchaseOrderItem.objects.create(
                             po_item_no=po_item_no,
@@ -862,11 +870,9 @@ class PurchaseRequestStatusUpdateView(APIView):
 
             if serializer.is_valid():
 
-                purchase_request.updated_at = timezone.now()
-
-                purchase_request.save()
-
-                serializer.save()
+                serializer.save(
+                    updated_at=timezone.now()
+                )
 
                 return Response(
                     serializer.data,
@@ -1196,20 +1202,30 @@ class InspectionAndAcceptanceList(generics.ListCreateAPIView):
         purchase_request = inspection.purchase_request
 
         supplier_items = SupplierItem.objects.filter(
-            rfq=inspection.purchase_order.request_for_quotation
+            supplier=inspection.purchase_order.supplier,
+            item_quotation__is_low_price=True
         )
 
         for supplier_item in supplier_items:
 
-            DeliveredItems.objects.create(
-                delivery_id=f"DEL-{supplier_item.supplier_item_no}",
-                purchase_request=purchase_request,
+            existing_delivery = DeliveredItems.objects.filter(
                 inspection=inspection,
-                supplier_item=supplier_item,
-                quantity_delivered=supplier_item.item_quantity,
-                is_complete=True,
-                is_partial=False
-            )
+                supplier_item=supplier_item
+            ).exists()
+
+            if not existing_delivery:
+
+                delivery_count = DeliveredItems.objects.count() + 1
+
+                DeliveredItems.objects.create(
+                    delivery_id=f"DEL-{timezone.now().year}-{delivery_count:04d}",
+                    purchase_request=purchase_request,
+                    inspection=inspection,
+                    supplier_item=supplier_item,
+                    quantity_delivered=supplier_item.item_quantity,
+                    is_complete=True,
+                    is_partial=False
+                )
 
 
 class InspectionAndAcceptanceDetail(generics.RetrieveUpdateDestroyAPIView):
