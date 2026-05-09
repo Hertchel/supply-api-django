@@ -815,7 +815,7 @@ class PurchaseRequestStatusUpdateView(APIView):
                     # get winning supplier items only
                     winning_supplier_items = SupplierItem.objects.filter(
                         supplier__aoq=aoq,
-                        item_quotation__is_low_price=True
+                        supplier__is_added=True
                     )
 
                     print("AOQ:", aoq)
