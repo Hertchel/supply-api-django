@@ -815,15 +815,8 @@ class PurchaseRequestStatusUpdateView(APIView):
                     # get winning supplier items only
                     winning_supplier_items = SupplierItem.objects.filter(
                         supplier__aoq=aoq,
-                        supplier__is_added=True
+                        item_quotation__is_low_price=True
                     )
-
-                    print("AOQ:", aoq)
-                    print("SUPPLIERS:", Supplier.objects.filter(aoq=aoq))
-                    print("SELECTED:", Supplier.objects.filter(
-                        aoq=aoq,
-                        is_added=True
-                    ))
 
                     if not winning_supplier_items.exists():
                         return Response(

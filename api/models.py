@@ -265,6 +265,7 @@ class Supplier(models.Model):
     aoq = models.ForeignKey(AbstractOfQuotation, on_delete=models.CASCADE, related_name='suppliers', null=True, blank=True)
     rfq = models.ForeignKey(RequestForQuotation, on_delete=models.CASCADE, related_name='suppliers')
     is_added = models.BooleanField(default=False)
+    is_selected_winner = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
