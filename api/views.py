@@ -1074,8 +1074,11 @@ class PurchaseOrderStatusUpdateView(APIView):
             serializer = PurchaseOrderSerializer(order, data=request.data, partial=True)
             if serializer.is_valid():
                 order.updated_at = timezone.now()
-                order.save()
-                serializer.save()
+                serializer.save(
+                    updated_at=timezone.now()
+                )
+                # order.save()
+                # serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except PurchaseOrder.DoesNotExist:
@@ -1301,7 +1304,7 @@ class DeliveredItemsUpdateView(APIView):
             delivered_items = DeliveredItems.objects.get(pk=pk)
             serializer = DeliveredItemsSerializer(delivered_items, data=request.data, partial=True)
             if serializer.is_valid():
-                delivered_items.save()
+                # delivered_items.save()
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
