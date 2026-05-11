@@ -578,6 +578,47 @@ class RequisitionerDashboardView(APIView):
             "purchase_requests": serializer.data
         })
 
+
+class AuthenticatedRequisitionerDashboardView(APIView):
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        try:
+
+            requisitioner = Requesitioner.objects.get(
+                user=request.user
+            )
+
+        except Requesitioner.DoesNotExist:
+
+            return Response(
+                {
+                    "error": "Requisitioner profile not found"
+                },
+                status=404
+            )
+
+        purchase_requests = PurchaseRequest.objects.filter(
+            requisitioner=requisitioner
+        ).order_by('-created_at')
+
+        serializer = PurchaseRequestSerializer(
+            purchase_requests,
+            many=True
+        )
+
+        return Response({
+            "requisitioner": {
+                "name": requisitioner.name,
+                "department": requisitioner.department,
+                "designation": requisitioner.designation,
+            },
+            "purchase_requests": serializer.data
+        })
+
 class RequisitionerDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, Update or Delete a Requisitioner

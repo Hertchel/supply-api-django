@@ -12,7 +12,16 @@ def create_groups():
 
 def assign_role_and_save(user, role_name):
     try:
-        group = Group.objects.get(name=role_name)
+        role_map = {
+            "admin": "Admin",
+            "supply": "Supply Officer",
+            "bac": "BAC Officer",
+            "requisitioner": "Requisitioner",
+        }
+
+        group_name = role_map.get(role_name.lower())
+
+        group = Group.objects.get(name=group_name)
         user.groups.add(group)
         user.save()
         print(f'{role_name} assign to {user} ')

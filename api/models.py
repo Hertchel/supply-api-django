@@ -40,6 +40,19 @@ class CustomUser(AbstractUser):
 
     is_reviewer = models.BooleanField(default=False)
 
+    ROLE_CHOICES = [
+        ("admin", "Admin"),
+        ("supply", "Supply"),
+        ("bac", "BAC"),
+        ("requisitioner", "Requisitioner"),
+    ]
+
+    role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        default="requisitioner"
+    )
+
     objects = CustomUserManager()
 
     username = None
@@ -90,6 +103,14 @@ class Requesitioner(models.Model):
     requisition_id = models.CharField(
         max_length=50,
         primary_key=True
+    )
+    
+    user = models.OneToOneField(
+    settings.AUTH_USER_MODEL,
+    on_delete=models.CASCADE,
+    related_name="requisitioner_profile",
+    null=True,
+    blank=True
     )
 
     name = models.CharField(max_length=255)

@@ -66,9 +66,15 @@ class CreateUserSerializer(serializers.ModelSerializer):
         user.otp_secret = pyotp.random_base32()
         print(f'otp secret created: {user.otp_secret}')
         user.set_password(password)
+        user.role = role
 
         # assign the role and save the user
         assign_role_and_save(user, role)
+        if role.lower() == "requisitioner":
+            Requesitioner.objects.create(
+                user=user,
+                name=f"{user.first_name} {user.last_name}",
+            )
         return user
 
 class CustomUserUpdateSerializer(serializers.ModelSerializer):
