@@ -612,6 +612,7 @@ class AuthenticatedRequisitionerDashboardView(APIView):
 
         return Response({
             "requisitioner": {
+                "requisition_id": requisitioner.requisition_id,
                 "name": requisitioner.name,
                 "department": requisitioner.department,
                 "designation": requisitioner.designation,
