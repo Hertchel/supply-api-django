@@ -69,9 +69,9 @@ urlpatterns = [
     path('requisition-slip/<str:pk>', RequisitionIssueSlipDetail.as_view()),
 
     path(
-    'public/requisitioners/',
-    PublicRequisitionerList.as_view()
-    ),
+        'public/requisitioners/',
+        PublicRequisitionerList.as_view()
+        ),
 
     path(
         'requisitioner-dashboard/<uuid:token>/',

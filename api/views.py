@@ -585,6 +585,11 @@ class AuthenticatedRequisitionerDashboardView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        
+        print("REQUEST USER:", request.user)
+        print("EMAIL:", request.user.email)
+        print("ROLE:", request.user.role)
+        print("AUTH:", request.auth)
 
         try:
 
