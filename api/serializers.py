@@ -26,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(required=True)
+    employee_id = serializers.CharField(read_only=True)
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     role = serializers.CharField(write_only=True)
@@ -44,18 +44,35 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({'password': 'Password fields didnt match.'})
         return attrs
-    
-    def validate_employee_id(self, value):
-        """Check if the employee_id is already in use."""
-        if CustomUser.objects.filter(employee_id=value).exists():
-            raise serializers.ValidationError("Employee ID already exists.")
-        return value
 
     def create(self, validated_data):
-        employee_id = validated_data.pop('employee_id')
+        # employee_id = validated_data.pop('employee_id')
         first_name = validated_data.pop('first_name')
         last_name = validated_data.pop('last_name')
         role = validated_data.pop('role')
+        role_map = {
+            "Supply Officer": "supply",
+            "BAC Officer": "bac",
+            "Requisitioner": "requisitioner"
+        }
+
+        role = role_map.get(role, role)
+        if role.lower() == "supply":
+            prefix = "Supply"
+
+        elif role.lower() == "bac":
+            prefix = "BAC"
+
+        elif role.lower() == "requisitioner":
+            prefix = "Req"
+
+        else:
+            prefix = "EMP"
+        existing_count = CustomUser.objects.filter(
+            role=role.lower()
+        ).count() + 1
+
+        employee_id = f"{prefix}-{existing_count}"
         email = validated_data.pop('email')
         password = validated_data.pop('password')
 
