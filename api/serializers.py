@@ -68,11 +68,21 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
         else:
             prefix = "EMP"
-        existing_count = CustomUser.objects.filter(
-            role=role.lower()
-        ).count() + 1
+        existing_users = CustomUser.objects.filter(
+            role=role.lower(),
+            employee_id__startswith=f"{prefix}-"
+        )
 
-        employee_id = f"{prefix}-{existing_count}"
+        highest_number = 0
+
+        for user_obj in existing_users:
+            try:
+                number_part = int(user_obj.employee_id.split("-")[1])
+                highest_number = max(highest_number, number_part)
+            except:
+                pass
+
+        employee_id = f"{prefix}-{highest_number + 1}"
         email = validated_data.pop('email')
         password = validated_data.pop('password')
 
