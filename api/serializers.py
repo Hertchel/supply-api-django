@@ -26,7 +26,8 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
-    employee_id = serializers.CharField(read_only=True)
+    employee_id = serializers.CharField(required=True)# manual emp no
+    # employee_id = serializers.CharField(read_only=True)# auto emp no
     first_name = serializers.CharField(required=True)
     last_name = serializers.CharField(required=True)
     role = serializers.CharField(write_only=True)
@@ -44,12 +45,21 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({'password': 'Password fields didnt match.'})
         return attrs
+    
+    def validate_employee_id(self, value):
+        if CustomUser.objects.filter(employee_id=value).exists():
+            raise serializers.ValidationError(
+                "Employee ID already exists."
+            )
+        return value
 
     def create(self, validated_data):
-        # employee_id = validated_data.pop('employee_id')
+        employee_id = validated_data.pop('employee_id')#manual emp no
         first_name = validated_data.pop('first_name')
         last_name = validated_data.pop('last_name')
         role = validated_data.pop('role')
+        #auto emp no
+        """
         role_map = {
             "Supply Officer": "supply",
             "BAC Officer": "bac",
@@ -83,6 +93,8 @@ class CreateUserSerializer(serializers.ModelSerializer):
                 pass
 
         employee_id = f"{prefix}-{highest_number + 1}"
+        """
+
         email = validated_data.pop('email')
         password = validated_data.pop('password')
 
