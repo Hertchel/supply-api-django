@@ -79,6 +79,17 @@ class RegisterUserAPIView(generics.CreateAPIView):
                         designation="BAC Member",
                         position="Member"
                     )
+                    created_bac = BACMember.objects.create(
+                        member_id=f"BAC-{timezone.now().year}-{bac_count:04d}",
+                        user=user,
+                        name=f"{user.first_name} {user.last_name}",
+                        designation="BAC Member",
+                        position="Member"
+                    )
+
+                    print("BAC MEMBER CREATED:", created_bac.member_id)
+                    print("BAC MEMBER NAME:", created_bac.name)
+                    print("TOTAL BAC MEMBERS:", BACMember.objects.count())
 # ===========================================================================================
 
                 token = get_tokens_for_user(user)
