@@ -428,6 +428,15 @@ class Bidding(models.Model):
 
 class BACMember(models.Model):
     member_id = models.CharField(max_length=50, primary_key=True)
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bac_profile",
+        null=True,
+        blank=True
+    )
+
     name = models.CharField(max_length=200)
     designation = models.CharField(max_length=255)
     position = models.CharField(max_length=100)

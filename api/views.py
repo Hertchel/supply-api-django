@@ -65,6 +65,22 @@ class RegisterUserAPIView(generics.CreateAPIView):
             try:
                 user = serializer.save()
                 user.save()
+
+# ==========================================================================================
+                # AUTO CREATE BAC MEMBER PROFILE             
+                if user.role == "bac":
+
+                    bac_count = BACMember.objects.count() + 1
+
+                    BACMember.objects.create(
+                        member_id=f"BAC-{timezone.now().year}-{bac_count:04d}",
+                        user=user,
+                        name=f"{user.first_name} {user.last_name}",
+                        designation="BAC Member",
+                        position="Member"
+                    )
+# ===========================================================================================
+
                 token = get_tokens_for_user(user)
 
                 # Get the current domain
