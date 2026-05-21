@@ -80,16 +80,16 @@ class RegisterUserAPIView(generics.CreateAPIView):
                         position="Member"
                     )
                     created_bac = BACMember.objects.create(
-                        member_id=f"BAC-{timezone.now().year}-{bac_count:04d}",
-                        user=user,
-                        name=f"{user.first_name} {user.last_name}",
-                        designation="BAC Member",
-                        position="Member"
-                    )
+                    member_id=f"BAC-{timezone.now().year}-{bac_count:04d}",
+                    user=user,
+                    name=f"{user.first_name} {user.last_name}",
+                    designation="BAC Member",
+                    position="Member"
+                )
 
-                    print("BAC MEMBER CREATED:", created_bac.member_id)
-                    print("BAC MEMBER NAME:", created_bac.name)
-                    print("TOTAL BAC MEMBERS:", BACMember.objects.count())
+                print("BAC MEMBER CREATED:", created_bac.member_id)
+                print("BAC MEMBER NAME:", created_bac.name)
+                print("TOTAL BAC MEMBERS:", BACMember.objects.count())
 # ===========================================================================================
 
                 token = get_tokens_for_user(user)
@@ -862,79 +862,6 @@ class PurchaseRequestStatusUpdateView(APIView):
             purchase_request = PurchaseRequest.objects.get(pk=pk)
 
             new_status = request.data.get("status")
-
-            # =========================================
-            # FORWARD TO SUPPLY LOGIC
-            # =========================================
-            if new_status == "Ready to Order":
-
-                # prevent duplicate PO creation
-                existing_po = PurchaseOrder.objects.filter(
-                    purchase_request=purchase_request
-                ).first()
-
-                if not existing_po:
-
-                    # get AOQ
-                    aoq = AbstractOfQuotation.objects.filter(
-                        purchase_request=purchase_request
-                    ).first()
-
-                    if not aoq:
-                        return Response(
-                            {"error": "AOQ not found"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
-                    # get winning supplier items only
-                    winning_supplier_items = SupplierItem.objects.filter(
-                        supplier__aoq=aoq,
-                        item_quotation__is_low_price=True
-                    )
-
-                    if not winning_supplier_items.exists():
-                        return Response(
-                            {"error": "No winning supplier items found"},
-                            status=status.HTTP_400_BAD_REQUEST
-                        )
-
-                    # use first supplier item for PO relations
-                    first_supplier_item = winning_supplier_items.first()
-
-                    # create purchase order
-                    po_count = PurchaseOrder.objects.count() + 1
-
-                    po_no = f"PO-{timezone.now().year}-{po_count:04d}"
-
-                    purchase_order = PurchaseOrder.objects.create(
-                        po_no=po_no,
-                        purchase_request=purchase_request,
-                        request_for_quotation=first_supplier_item.rfq,
-                        abstract_of_quotation=aoq,
-                        supplier=first_supplier_item.supplier,
-                        total_amount=sum([
-                            item.total_amount
-                            for item in winning_supplier_items
-                        ]),
-                        status="In Progress"
-                    )
-
-                    # create purchase order items
-                    for index, supplier_item in enumerate(winning_supplier_items, start=1):
-
-                        po_item_count = PurchaseOrderItem.objects.count() + 1
-
-                        po_item_no = f"POITEM-{timezone.now().year}-{po_item_count:04d}"
-
-                        PurchaseOrderItem.objects.create(
-                            po_item_no=po_item_no,
-                            purchase_request=purchase_request,
-                            purchase_order=purchase_order,
-                            supplier_item=supplier_item,
-                            quantity_ordered=supplier_item.item_quantity,
-                            unit_price=supplier_item.item_cost,
-                            total_price=supplier_item.total_amount
-                        )
 
             serializer = PurchaseRequestSerializer(
                 purchase_request,
