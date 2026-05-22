@@ -1341,7 +1341,7 @@ class FundClusterListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
 
-class OfficeListView(generics.ListAPIView):
+class OfficeListView(generics.ListCreateAPIView):
     queryset = Office.objects.filter(is_active=True)
     serializer_class = OfficeSerializer
     permission_classes = [permissions.IsAuthenticated]
