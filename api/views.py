@@ -38,7 +38,7 @@ from .models import *
 from .resend import send_mail_resend, send_file
 
 #from .utils import send_otp_email
-
+from rest_framework.generics import RetrieveAPIView
 from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
 from dotenv import load_dotenv
@@ -1346,7 +1346,12 @@ class OfficeListView(generics.ListCreateAPIView):
     serializer_class = OfficeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-from rest_framework.generics import RetrieveAPIView
+class OfficeDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+    queryset = Office.objects.all()
+    serializer_class = OfficeSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
 class RFQDetailView(APIView):
     def get(self, request, rfq_no):

@@ -93,5 +93,7 @@ urlpatterns = [
     re_path(r"^rfq/(?P<rfq_no>.+)/full/$", RFQDetailView.as_view()),
     
     path('ai/', include('ai.urls')),
+    path('offices/', OfficeListView.as_view()),
+    path('offices/<int:pk>/', OfficeDetailView.as_view()),
 
 ]
