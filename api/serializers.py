@@ -116,14 +116,23 @@ class CreateUserSerializer(serializers.ModelSerializer):
             generated_req_id = f"REQ-{timezone.now().year}-{requisitioner_count:04d}"
             print("GENERATED REQUISITIONER ID:", generated_req_id)
 
-            Requesitioner.objects.create(
-                requisition_id=generated_req_id,
-                user=user,
-                name=f"{user.first_name} {user.last_name}",
-                gender="",
-                department="",
-                designation=""
-            )
+            try:
+
+                Requesitioner.objects.create(
+                    requisition_id=generated_req_id,
+                    user=user,
+                    name=f"{user.first_name} {user.last_name}",
+                    gender="",
+                    department="",
+                    designation=""
+                )
+
+                print("REQUISITIONER CREATED SUCCESSFULLY")
+
+            except Exception as e:
+
+                print("REQUISITIONER CREATION ERROR:", str(e))
+                raise e
         return user
 
 class CustomUserUpdateSerializer(serializers.ModelSerializer):
