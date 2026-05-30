@@ -110,9 +110,16 @@ class CreateUserSerializer(serializers.ModelSerializer):
         # assign the role and save the user
         assign_role_and_save(user, role)
         if role.lower() == "requisitioner":
+
+            requisitioner_count = Requesitioner.objects.count() + 1
+
             Requesitioner.objects.create(
+                requisition_id=f"REQ-{timezone.now().year}-{requisitioner_count:04d}",
                 user=user,
                 name=f"{user.first_name} {user.last_name}",
+                gender="",
+                department="",
+                designation=""
             )
         return user
 
