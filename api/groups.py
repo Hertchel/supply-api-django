@@ -14,8 +14,13 @@ def assign_role_and_save(user, role_name):
     try:
         role_map = {
             "admin": "Admin",
+
             "supply": "Supply Officer",
+            "supply officer": "Supply Officer",
+
             "bac": "BAC Officer",
+            "bac officer": "BAC Officer",
+
             "requisitioner": "Requisitioner",
         }
 
