@@ -113,9 +113,11 @@ class CreateUserSerializer(serializers.ModelSerializer):
         if role.lower() == "requisitioner":
 
             requisitioner_count = Requesitioner.objects.count() + 1
+            generated_req_id = f"REQ-{timezone.now().year}-{requisitioner_count:04d}"
+            print("GENERATED REQUISITIONER ID:", generated_req_id)
 
             Requesitioner.objects.create(
-                requisition_id=f"REQ-{timezone.now().year}-{requisitioner_count:04d}",
+                requisition_id=generated_req_id,
                 user=user,
                 name=f"{user.first_name} {user.last_name}",
                 gender="",
