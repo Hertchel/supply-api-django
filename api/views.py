@@ -65,7 +65,7 @@ class RegisterUserAPIView(generics.CreateAPIView):
             try:
                 user = serializer.save()
                 user.save()
-
+                """
 # ==========================================================================================
                 # AUTO CREATE BAC MEMBER PROFILE             
                 if user.role == "bac":
@@ -84,6 +84,7 @@ class RegisterUserAPIView(generics.CreateAPIView):
                     print("BAC MEMBER NAME:", created_bac.name)
                     print("TOTAL BAC MEMBERS:", BACMember.objects.count())
 # ===========================================================================================
+                """
 
                 token = get_tokens_for_user(user)
 
