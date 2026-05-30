@@ -111,9 +111,20 @@ class CreateUserSerializer(serializers.ModelSerializer):
         # assign the role and save the user
         assign_role_and_save(user, role)
         if role.lower() == "requisitioner":
+ 
+            last_requisitioner = Requesitioner.objects.order_by('-requisition_id').first()
 
-            requisitioner_count = Requesitioner.objects.count() + 1
-            generated_req_id = f"REQ-{timezone.now().year}-{requisitioner_count:04d}"
+            if last_requisitioner:
+
+                last_number = int(last_requisitioner.requisition_id.split('-')[-1])
+
+            else:
+
+                last_number = 0
+
+            new_number = last_number + 1
+
+            generated_req_id = f"REQ-{timezone.now().year}-{new_number:04d}"
             print("GENERATED REQUISITIONER ID:", generated_req_id)
 
             try:
