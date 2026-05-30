@@ -57,6 +57,7 @@ class RegisterUserAPIView(generics.CreateAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [AllowAny]
 
+    @transaction.atomic
     def post(self, request):
         serializer = CreateUserSerializer(data=request.data)
 
