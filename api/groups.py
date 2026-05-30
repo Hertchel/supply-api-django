@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group
 
 
 def create_groups():
-    roles = ['Supply Officer', 'BAC Officer', 'Admin']
+    roles = ['Supply Officer', 'BAC Officer', 'Requisitioner', 'Admin']
 
     for role in roles:
         group, created = Group.objects.get_or_create(name=role)
