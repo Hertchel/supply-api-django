@@ -1372,6 +1372,20 @@ class RFQDetailView(APIView):
         serializer = RequestForQuotationDetailSerializer(rfq)
         return Response(serializer.data)
     
-class ReviewerListView(generics.ListAPIView):
+class ReviewerListView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.filter(is_reviewer=True)
     serializer_class = UserSerializer
+
+class ReviewerDetailView(
+    generics.RetrieveUpdateDestroyAPIView
+):
+
+    queryset = CustomUser.objects.filter(
+        is_reviewer=True
+    )
+
+    serializer_class = UserSerializer
+
+    authentication_classes = [CookieJWTAuthentication]
+
+    permission_classes = [IsAuthenticated]

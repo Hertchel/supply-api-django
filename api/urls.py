@@ -89,6 +89,7 @@ urlpatterns = [
     path('track-purchase-request/filter/', TrackStatusListView.as_view(), name='track-purchase-request'),
     
     path('reviewers/', ReviewerListView.as_view()),
+    path( 'reviewers/<int:pk>', ReviewerDetailView.as_view() ),
 
     re_path(r"^rfq/(?P<rfq_no>.+)/full/$", RFQDetailView.as_view()),
     
