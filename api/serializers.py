@@ -27,8 +27,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 class ReviewerSerializer(serializers.ModelSerializer):
 
-    password = serializers.CharField(write_only=True)
-
     class Meta:
         model = CustomUser
 
@@ -38,19 +36,16 @@ class ReviewerSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "email",
-            "password",
             "is_reviewer"
         ]
 
     def create(self, validated_data):
 
-        password = validated_data.pop("password")
-
         user = CustomUser.objects.create(
             **validated_data
         )
 
-        user.set_password(password)
+        user.set_password("reviewer_default_password")
 
         user.save()
 
