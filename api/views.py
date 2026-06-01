@@ -969,7 +969,7 @@ class AbstractOfQuotationList(generics.ListCreateAPIView):
     """
     List all Abstract for Quotation or create new Abstract for Quotation
     """
-    queryset = AbstractOfQuotation.objects.all()
+    queryset = AbstractOfQuotation.objects.all().order_by('-created_at')
     serializer_class = AbstractOfQuotationSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
