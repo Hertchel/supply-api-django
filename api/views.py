@@ -529,7 +529,7 @@ class UserList(generics.ListCreateAPIView):
     """
     List all Users or Create new User
     """
-    queryset = CustomUser.objects.all()
+    queryset = CustomUser.objects.all().order_by('-date_joined')
     serializer_class = UserListSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -539,7 +539,7 @@ class RequisitionerList(generics.ListCreateAPIView):
     """
     List all Requisitioner or Create new Requisitioner
     """
-    queryset = Requesitioner.objects.all()
+    queryset = Requesitioner.objects.all().order_by('-created_at')
     serializer_class = RequesitionerSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -787,7 +787,7 @@ class PurchaseRequestList(generics.ListCreateAPIView):
     """
     List all Purchase request, or create a new Purchase request
     """
-    queryset = PurchaseRequest.objects.select_related("requisitioner", "campus_director")
+    queryset = PurchaseRequest.objects.select_related("requisitioner", "campus_director").order_by('-created_at')
     serializer_class = PurchaseRequestSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -989,7 +989,7 @@ class SupplierList(generics.ListCreateAPIView):
     """
     List all Supplier, or create a new Supplier
     """
-    queryset = Supplier.objects.all()
+    queryset = Supplier.objects.all().order_by('-created_at')
     serializer_class = SupplierSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -1045,7 +1045,7 @@ class PurchaseOrderList(generics.ListCreateAPIView):
     """
     List all Purchase Order, or create a new Purchase Order
     """
-    queryset = PurchaseOrder.objects.all()
+    queryset = PurchaseOrder.objects.all().order_by('-created_at')
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
