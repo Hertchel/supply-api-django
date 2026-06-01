@@ -930,7 +930,7 @@ class RequestForQuotationList(generics.ListCreateAPIView):
     """
     List all Request for Quotation, or create a new Request For Quotation
     """
-    queryset = RequestForQuotation.objects.all()
+    queryset = RequestForQuotation.objects.all().order_by('-created_at')
     serializer_class = RequestForQuotationSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
