@@ -30,6 +30,8 @@ from .serializers import FundClusterSerializer, OfficeSerializer
 from .models import CustomUser
 from .serializers import UserSerializer
 
+from .serializers import ReviewerSerializer
+
 from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import *
@@ -1374,7 +1376,7 @@ class RFQDetailView(APIView):
     
 class ReviewerListView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.filter(is_reviewer=True)
-    serializer_class = UserSerializer
+    serializer_class = ReviewerSerializer
 
 class ReviewerDetailView(
     generics.RetrieveUpdateDestroyAPIView
