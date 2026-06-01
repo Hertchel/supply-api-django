@@ -42,7 +42,11 @@ class ReviewerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         user = CustomUser.objects.create(
+
+            password="reviewer_default_password",
+
             **validated_data
+
         )
 
         user.set_password("reviewer_default_password")
