@@ -283,6 +283,7 @@ class Supplier(models.Model):
     contact_person = models.CharField(max_length=255)
     contact_number = models.CharField(max_length=20)
     tin = models.CharField(max_length=50)
+    extra_character = models.CharField(max_length=1, blank=True, default="")
     aoq = models.ForeignKey(AbstractOfQuotation, on_delete=models.CASCADE, related_name='suppliers', null=True, blank=True)
     rfq = models.ForeignKey(RequestForQuotation, on_delete=models.CASCADE, related_name='suppliers')
     is_added = models.BooleanField(default=False)
