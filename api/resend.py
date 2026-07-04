@@ -28,20 +28,16 @@ def send_mail_resend(receiver, subject, html):
             print(f"TO: {receiver}")
             print(f"SUBJECT: {subject}")
             print(f"CONTENT PREVIEW: {html[:200]}...")
-            print("================================\n")
+            print("======================================================\n")
             return {"message": "Email disabled - No API key configured"}
         
         # Check if domain is configured
         if not sender_domain_name:
-            print("===============================================\n")
-            print("===============================================\n")
-            print("===============================================\n")
+            print("===========================================================\n")
             print(f"\nEMAIL DISABLED - No DOMAIN_NAME configured")
             print(f"TO: {receiver}")
             print(f"SUBJECT: {subject}")
-            print("===============================================\n")
-            print("===============================================\n")
-            print("===============================================\n")
+            print("==========================================================\n")
             return {"message": "Email disabled - No domain configured"}
         
         try:
@@ -63,7 +59,7 @@ def send_mail_resend(receiver, subject, html):
         print("TO:", receiver)
         print("SUBJECT:", subject)
         print("CONTENT:", html[:200] + "..." if len(html) > 200 else html)
-        print("================================\n")
+        print("========================================================\n")
         return {"message": "Email printed in console (development mode)"}
 
 

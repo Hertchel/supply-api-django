@@ -38,6 +38,7 @@ from .filters import *
 from .models import *
 
 from .resend import send_mail_resend, send_file
+from api.resend import send_mail_django
 
 #from .utils import send_otp_email
 from rest_framework.generics import RetrieveAPIView
@@ -205,11 +206,25 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             user.generate_otp()
 
             subject = 'Your OTP Code'
+            #Uncomment this part once the email service is configured and working
+            """
             message_html = f'<p>Your OTP code is <strong>{user.otp_code}</strong>. It is valid for 5 minutes.</p>'
 
             # send_OTP_mail(user.email, subject, message_html )
             send_mail_resend(user.email, subject, message_html)
+            """
+            #This block of code is only temporary
+            #Comment this one if the above block of code can be used/working
+            message = (
+                f"Your OTP code is {user.otp_code}.\n\n"
+                "This OTP is valid for 5 minutes."
+            )
 
+            send_mail_django(
+                message,
+                subject,
+                user.email,
+            )
 
             return Response({'message': f"We've sent a verification code to {user.email}. Please check your inbox and verify your account.", 'email': user.email}, status=status.HTTP_200_OK)
         except Exception as e:
@@ -322,10 +337,17 @@ class ResendOTPView(APIView):
                 # generate new OTP
                 user.generate_otp()
 
-                print(
-                    f"[OTP RESEND] "
-                    f"{user.email} -> "
-                    f"{user.otp_code}"
+                subject = "Your OTP Code"
+
+                message = (
+                    f"Your OTP code is {user.otp_code}.\n\n"
+                    "This OTP is valid for 5 minutes."
+                )
+
+                send_mail_django(
+                    message,
+                    subject,
+                    user.email,
                 )
 
                 return Response({
