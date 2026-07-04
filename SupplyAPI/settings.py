@@ -89,7 +89,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', 465))
 #EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
-EMAIL_TIMEOUT = 15
+#EMAIL_TIMEOUT = 15
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
