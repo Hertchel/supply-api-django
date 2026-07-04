@@ -2,6 +2,7 @@ import os
 import resend
 from django.core.mail import send_mail
 from dotenv import load_dotenv
+from django.conf import settings
 
 load_dotenv()
 
@@ -23,7 +24,7 @@ def send_mail_resend(receiver, subject, html):
     if os.getenv("DJANGO_ENV") == "production":
         # Check if API key is configured
         if not api_key:
-            print(f"\n⚠️  EMAIL DISABLED - No RESEND_API_KEY configured")
+            print(f"\nEMAIL DISABLED - No RESEND_API_KEY configured")
             print(f"TO: {receiver}")
             print(f"SUBJECT: {subject}")
             print(f"CONTENT PREVIEW: {html[:200]}...")
@@ -35,7 +36,7 @@ def send_mail_resend(receiver, subject, html):
             print("===============================================\n")
             print("===============================================\n")
             print("===============================================\n")
-            print(f"\n⚠️  EMAIL DISABLED - No DOMAIN_NAME configured")
+            print(f"\nEMAIL DISABLED - No DOMAIN_NAME configured")
             print(f"TO: {receiver}")
             print(f"SUBJECT: {subject}")
             print("===============================================\n")
@@ -51,10 +52,10 @@ def send_mail_resend(receiver, subject, html):
                 "html": html
             }
             response = resend.Emails.send(params)
-            print(f"✅ Email sent successfully to {receiver}")
+            print(f" Email sent successfully to {receiver}")
             return response
         except Exception as e:
-            print(f"❌ Error sending email to {receiver}: {e}")
+            print(f"Error sending email to {receiver}: {e}")
             return {"error": str(e)}
 
     else:
@@ -69,11 +70,11 @@ def send_mail_resend(receiver, subject, html):
 def send_mail_django(message, subject, email):
     """Send email using Django's built-in email system"""
     try:
-        send_mail(subject, message, 'settings.EMAIL_HOST_USER', [email], fail_silently=False)
-        print(f"✅ Django email sent to {email}")
+        send_mail(subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False)
+        print(f"Django email sent to {email}")
         return {"message": "Email sent successfully"}
     except Exception as e:
-        print(f"❌ Error sending Django email to {email}: {e}")
+        print(f"Error sending Django email to {email}: {e}")
         return {"error": str(e)}
 
 
@@ -89,14 +90,14 @@ def send_file(file, email, html):
 
     # Check if API key is configured
     if not api_key:
-        print(f"\n⚠️  FILE EMAIL DISABLED - No RESEND_API_KEY configured")
+        print(f"\nFILE EMAIL DISABLED - No RESEND_API_KEY configured")
         print(f"TO: {email}")
         print(f"FILE: {file.name}")
         print("================================\n")
         return {"message": "File email disabled - No API key configured"}
 
     if not sender_domain_name:
-        print(f"\n⚠️  FILE EMAIL DISABLED - No DOMAIN_NAME configured")
+        print(f"\nFILE EMAIL DISABLED - No DOMAIN_NAME configured")
         print(f"TO: {email}")
         print(f"FILE: {file.name}")
         print("================================\n")
@@ -127,11 +128,11 @@ def send_file(file, email, html):
         }
 
         response = resend.Emails.send(params)
-        print(f"✅ File email sent successfully to {email} with attachment: {file.name}")
+        print(f"File email sent successfully to {email} with attachment: {file.name}")
         return {"message": "Email sent successfully."}
 
     except Exception as e:
-        print(f"❌ Error sending file email to {email}: {e}")
+        print(f"Error sending file email to {email}: {e}")
         return {"error": str(e)}
 
     finally:

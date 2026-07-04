@@ -162,7 +162,7 @@ if IS_LOCALHOST or ENVIRONMENT == 'development':
             'PORT': os.getenv('PORT'),
         }
     }
-    print(f"✅ Using LOCAL PostgreSQL database: {os.getenv('DB_NAME')}")
+    print(f"Using LOCAL PostgreSQL database: {os.getenv('DB_NAME')}")
 
 # Test environment
 elif ENVIRONMENT == 'test':
@@ -204,7 +204,7 @@ else:
                 },
             }
         }
-        print("✅ Using PostgreSQL with individual settings (Production)")
+        print(" Using PostgreSQL with individual settings (Production)")
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
