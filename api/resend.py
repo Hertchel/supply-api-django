@@ -3,6 +3,7 @@ import resend
 from django.core.mail import send_mail
 from dotenv import load_dotenv
 from django.conf import settings
+import traceback
 
 load_dotenv()
 
@@ -69,9 +70,15 @@ def send_mail_django(message, subject, email):
         send_mail(subject, message, settings.EMAIL_HOST_USER, [email], fail_silently=False)
         print(f"Django email sent to {email}")
         return {"message": "Email sent successfully"}
+
     except Exception as e:
-        print(f"Error sending Django email to {email}: {e}")
-        return {"error": str(e)}
+        traceback.print_exc()
+
+        print("========== SMTP ERROR ==========")
+        print(e)
+        print("===============================")
+
+        raise
 
 
 def send_file(file, email, html):
