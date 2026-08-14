@@ -208,10 +208,7 @@ else:
             "PORT": os.getenv("TIDB_PORT", "4000"),
             "OPTIONS": {
                 "charset": "utf8mb4",
-                "ssl_mode": "VERIFY_IDENTITY",
-                "ssl": {
-                    "ca": TIDB_CA_PATH,
-                },
+                "ssl": {},
             },
         }
     }
