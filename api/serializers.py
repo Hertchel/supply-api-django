@@ -301,6 +301,44 @@ class RequisitionerItemSerializer(serializers.ModelSerializer):
             'unit_cost',
             'total_cost'
         ]
+
+class PurchaseRequestListSerializer(serializers.ModelSerializer):
+    requisitioner_details = RequesitionerSerializer(
+        source='requisitioner',
+        read_only=True
+    )
+
+    campus_director_details = CampusDirectorSerializer(
+        source='campus_director',
+        read_only=True
+    )
+
+    office_details = OfficeSerializer(
+        source='office',
+        read_only=True
+    )
+
+    class Meta:
+        model = PurchaseRequest
+        fields = [
+            'pr_no',
+            'res_center_code',
+            'fund_cluster',
+            'office',
+            'office_details',
+            'purpose',
+            'status',
+            'requisitioner',
+            'requisitioner_details',
+            'reviewed_by',
+            'campus_director',
+            'campus_director_details',
+            'mode_of_procurement',
+            'total_amount',
+            'created_at',
+            'updated_at',
+        ]
+
 class PurchaseRequestSerializer(serializers.ModelSerializer):
 
     requisitioner = serializers.PrimaryKeyRelatedField(
@@ -394,10 +432,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
         return None
 
     def get_items(self, obj):
-
-        items = Item.objects.filter(
-            purchase_request=obj
-        )
+        items = obj.items.all()
 
         return RequisitionerItemSerializer(
             items,
@@ -432,6 +467,21 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             return supplier_item.supplier.name
 
         return None
+
+class ItemListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Item
+        fields = [
+            'item_no',
+            'purchase_request',
+            'stock_property_no',
+            'unit',
+            'item_description',
+            'quantity',
+            'unit_cost',
+            'total_cost',
+            'created_at',
+        ]
         
 class ItemSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)

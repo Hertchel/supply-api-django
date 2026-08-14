@@ -161,6 +161,7 @@ DATABASES = {'default': {}}
 
 # Local PostgreSQL (development)
 if IS_LOCALHOST or ENVIRONMENT == 'development':
+    """
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -182,8 +183,8 @@ if IS_LOCALHOST or ENVIRONMENT == 'development':
             "PORT": os.getenv("TIDB_PORT", "4000"),
         }
     }
-    """
-    print(f"Using LOCAL PostgreSQL database: {os.getenv('DB_NAME')}")
+   
+    print(f"Using LOCAL database: {os.getenv('TIDB_DB_NAME')}")
 
 # Test environment
 elif ENVIRONMENT == 'test':
