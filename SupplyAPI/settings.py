@@ -163,6 +163,18 @@ if IS_LOCALHOST or ENVIRONMENT == 'development':
             'PORT': os.getenv('PORT'),
         }
     }
+    """
+    DATABASES = {
+        "default": {
+            "ENGINE": "django_tidb",
+            "NAME": os.getenv("TIDB_DB_NAME"),
+            "USER": os.getenv("TIDB_USER"),
+            "PASSWORD": os.getenv("TIDB_PASSWORD"),
+            "HOST": os.getenv("TIDB_HOST"),
+            "PORT": os.getenv("TIDB_PORT", "4000"),
+        }
+    }
+    """
     print(f"Using LOCAL PostgreSQL database: {os.getenv('DB_NAME')}")
 
 # Test environment
@@ -179,7 +191,26 @@ elif ENVIRONMENT == 'test':
     }
     print(f" Using TEST database: {os.getenv('DB_TEST_NAME')}")
 
-# Production (Render/Supabase - PostgreSQL)
+# Production (Render - TiDB Cloud)
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django_tidb',
+            'NAME': os.getenv('TIDB_DB_NAME'),
+            'USER': os.getenv('TIDB_USER'),
+            'PASSWORD': os.getenv('TIDB_PASSWORD'),
+            'HOST': os.getenv('TIDB_HOST'),
+            'PORT': os.getenv('TIDB_PORT', '4000'),
+        }
+    }
+
+    print(
+        f"Using TiDB Cloud database (Production): "
+        f"{os.getenv('TIDB_DB_NAME')} @ {os.getenv('TIDB_HOST')}"
+    )
+
+"""
+# Production (Render - PostgreSQL)
 else:
     # Try to use DATABASE_URL first (for Render/Supabase)
     database_url = os.getenv('DATABASE_URL')
@@ -206,6 +237,8 @@ else:
             }
         }
         print("F Using PostgreSQL with individual settings (Production)")
+"""
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
