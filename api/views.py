@@ -334,15 +334,38 @@ class ResendOTPView(APIView):
             try:
                 user = CustomUser.objects.get(email=email)
 
-                # generate new OTP
+                # Generate a new OTP
                 user.generate_otp()
 
                 subject = "Your OTP Code"
 
-                print(
-                    f"[OTP RESEND] "
-                    f"{user.email} -> "
-                    f"{user.otp_code}"
+                message_html = f"""
+                <p>Hello <strong>{user.first_name}</strong>,</p>
+
+                <p>Your new verification code is:</p>
+
+                <h2 style="letter-spacing: 4px;">
+                    {user.otp_code}
+                </h2>
+
+                <p>This OTP is valid for 5 minutes.</p>
+
+                <p>
+                If you did not request this code, please ignore this email.
+                </p>
+
+                <p>
+                Best regards,<br>
+                Supply Office<br>
+                Team SlapSoil
+                </p>
+                """
+
+                # Send OTP through Resend
+                send_mail_resend(
+                    user.email,
+                    subject,
+                    message_html
                 )
 
                 return Response({

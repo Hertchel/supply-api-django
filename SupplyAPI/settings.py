@@ -58,8 +58,12 @@ CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+
     "https://supply-management-system.netlify.app",
     "https://supply-frontend-react.onrender.com", 
+
+    "https://procurement-management-office.com",
+    "https://www.procurement-management-office.com",
 ]
 
 # FIXED: Add any additional allowed origins for Render preview branches
@@ -69,8 +73,12 @@ CORS_ALLOW_ALL_ORIGINS = False  # Keep False for security
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
+
     "https://supply-management-system.netlify.app",
     "https://supply-frontend-react.onrender.com", 
+
+    "https://procurement-management-office.com",
+    "https://www.procurement-management-office.com",
 ]
 
 CSRF_COOKIE_SECURE = not DEBUG  
