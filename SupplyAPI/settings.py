@@ -206,8 +206,12 @@ else:
             "PASSWORD": os.getenv("TIDB_PASSWORD"),
             "HOST": os.getenv("TIDB_HOST"),
             "PORT": os.getenv("TIDB_PORT", "4000"),
-            'OPTIONS': {
-                'sslmode': 'require',
+            "OPTIONS": {
+                "charset": "utf8mb4",
+                "ssl_mode": "VERIFY_IDENTITY",
+                "ssl": {
+                    "ca": TIDB_CA_PATH,
+                },
             },
         }
     }
