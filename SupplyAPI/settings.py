@@ -193,11 +193,6 @@ elif ENVIRONMENT == 'test':
 
 # Production (Render - TiDB Cloud)
 else:
-    TIDB_CA_PATH = os.getenv(
-        "TIDB_CA_PATH",
-        str(BASE_DIR / "certs" / "ca.pem")
-    )
-
     DATABASES = {
         "default": {
             "ENGINE": "django_tidb",
@@ -206,10 +201,6 @@ else:
             "PASSWORD": os.getenv("TIDB_PASSWORD"),
             "HOST": os.getenv("TIDB_HOST"),
             "PORT": os.getenv("TIDB_PORT", "4000"),
-            "OPTIONS": {
-                "charset": "utf8mb4",
-                "ssl": {},
-            },
         }
     }
 
