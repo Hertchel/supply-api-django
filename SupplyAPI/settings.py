@@ -195,7 +195,7 @@ elif ENVIRONMENT == 'test':
 else:
     TIDB_CA_PATH = os.getenv(
         "TIDB_CA_PATH",
-        str(BASE_DIR / "certs" / "ca.pem")
+        str(BASE_DIR / "certs" / "isrgrootx1.pem")
     )
 
     DATABASES = {
