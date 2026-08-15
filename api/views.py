@@ -839,7 +839,7 @@ class PurchaseRequestList(generics.ListCreateAPIView):
         .order_by('-created_at')
     )
 
-    serializer_class = PurchaseRequestListSerializer
+    serializer_class = PurchaseRequestSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 

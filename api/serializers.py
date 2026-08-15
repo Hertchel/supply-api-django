@@ -432,7 +432,9 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
         return None
 
     def get_items(self, obj):
-        items = obj.items.all()
+        items = Item.objects.filter(
+            purchase_request=obj
+        )
 
         return RequisitionerItemSerializer(
             items,
