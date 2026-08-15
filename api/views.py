@@ -1,8 +1,8 @@
+#VIEW
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 
 from django.db import IntegrityError, transaction
-from django.db.models import Prefetch
 
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
@@ -625,22 +625,9 @@ class RequisitionerDashboardView(APIView):
                 status=404
             )
 
-        purchase_requests = (
-            PurchaseRequest.objects
-            .filter(requisitioner=requisitioner)
-            .select_related(
-                'requisitioner',
-                'campus_director',
-                'office',
-                'reviewed_by',
-            )
-            .prefetch_related(
-                'items',
-                'quotations__supplier_items__supplier',
-                'abstracts__suppliers__supplier_items',
-            )
-            .order_by('-created_at')
-        )
+        purchase_requests = PurchaseRequest.objects.filter(
+            requisitioner=requisitioner
+        ).order_by('-created_at')
 
         serializer = PurchaseRequestSerializer(
             purchase_requests,
@@ -679,22 +666,9 @@ class AuthenticatedRequisitionerDashboardView(APIView):
                 status=404
             )
 
-        purchase_requests = (
-            PurchaseRequest.objects
-            .filter(requisitioner=requisitioner)
-            .select_related(
-                'requisitioner',
-                'campus_director',
-                'office',
-                'reviewed_by',
-            )
-            .prefetch_related(
-                'items',
-                'quotations__supplier_items__supplier',
-                'abstracts__suppliers__supplier_items',
-            )
-            .order_by('-created_at')
-        )
+        purchase_requests = PurchaseRequest.objects.filter(
+            requisitioner=requisitioner
+        ).order_by('-created_at')
 
         serializer = PurchaseRequestSerializer(
             purchase_requests,
@@ -802,12 +776,8 @@ class ItemList(generics.ListCreateAPIView):
     """
     List all Item, or create a new item
     """
-    queryset = (
-        Item.objects
-        .select_related('purchase_request')
-        .order_by('-created_at')
-    )
-    serializer_class = ItemListSerializer
+    queryset = Item.objects.all()
+    serializer_class = ItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -839,16 +809,7 @@ class ItemsDetail(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         filter_kwargs = {field_name: value}
-        items = (
-            Item.objects
-            .filter(**filter_kwargs)
-            .select_related(
-                'purchase_request',
-                'purchase_request__requisitioner',
-                'purchase_request__campus_director',
-                'purchase_request__office',
-            )
-        )
+        items = Item.objects.filter(**filter_kwargs)
 
         if not items.exists():
             return Response({
@@ -856,33 +817,15 @@ class ItemsDetail(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
         # Serialize the items before sending back to front-end
-        serializer = ItemRequisitionerSerializer(items, many=True)
+        serializer = ItemSerializer(items, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
- 
 
 class PurchaseRequestList(generics.ListCreateAPIView):
-
     """
     List all Purchase request, or create a new Purchase request
     """
-
-    queryset = (
-        PurchaseRequest.objects
-        .select_related(
-            'requisitioner',
-            'campus_director',
-            'office',
-            'reviewed_by',
-        )
-        .prefetch_related(
-            'items',
-            'quotations__supplier_items__supplier',
-            'abstracts__suppliers__supplier_items',
-        )
-        .order_by('-created_at')
-    )
-
+    queryset = PurchaseRequest.objects.select_related("requisitioner", "campus_director").order_by('-created_at')
     serializer_class = PurchaseRequestSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
