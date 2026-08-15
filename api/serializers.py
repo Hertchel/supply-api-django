@@ -432,41 +432,37 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
         return None
 
     def get_items(self, obj):
-        items = Item.objects.filter(
-            purchase_request=obj
-        )
-
         return RequisitionerItemSerializer(
-            items,
+            obj.items.all(),
             many=True
         ).data
 
     def get_supplier_name(self, obj):
 
-        supplier_item = SupplierItem.objects.filter(
-            rfq__purchase_request=obj
-        ).first()
+        for rfq in obj.quotations.all():
+            supplier_item = next(
+                iter(rfq.supplier_items.all()),
+                None
+            )
 
-        if supplier_item and supplier_item.supplier:
-            return supplier_item.supplier.name
+            if supplier_item and supplier_item.supplier:
+                return supplier_item.supplier.name
 
         return None
-
+    
     def get_winning_bidder(self, obj):
 
-        aoq = AbstractOfQuotation.objects.filter(
-            purchase_request=obj
-        ).first()
+        for aoq in obj.abstracts.all():
 
-        if not aoq:
-            return None
+            for supplier in aoq.suppliers.all():
 
-        supplier_item = SupplierItem.objects.filter(
-            supplier__aoq=aoq
-        ).first()
+                supplier_item = next(
+                    iter(supplier.supplier_items.all()),
+                    None
+                )
 
-        if supplier_item and supplier_item.supplier:
-            return supplier_item.supplier.name
+                if supplier_item:
+                    return supplier.name
 
         return None
 
@@ -476,6 +472,28 @@ class ItemListSerializer(serializers.ModelSerializer):
         fields = [
             'item_no',
             'purchase_request',
+            'stock_property_no',
+            'unit',
+            'item_description',
+            'quantity',
+            'unit_cost',
+            'total_cost',
+            'created_at',
+        ]
+
+class ItemRequisitionerSerializer(serializers.ModelSerializer):
+
+    pr_details = PurchaseRequestListSerializer(
+        source='purchase_request',
+        read_only=True
+    )
+
+    class Meta:
+        model = Item
+        fields = [
+            'item_no',
+            'purchase_request',
+            'pr_details',
             'stock_property_no',
             'unit',
             'item_description',
