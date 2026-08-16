@@ -161,7 +161,7 @@ DATABASES = {'default': {}}
 
 # Local PostgreSQL (development)
 if IS_LOCALHOST or ENVIRONMENT == 'development':
-    """
+    
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -183,8 +183,9 @@ if IS_LOCALHOST or ENVIRONMENT == 'development':
             "PORT": os.getenv("TIDB_PORT", "4000"),
         }
     }
+    """
    
-    print(f"Using LOCAL database: {os.getenv('TIDB_DB_NAME')}")
+    print(f"Using LOCAL database: {os.getenv('DB_NAME')}")
 
 # Test environment
 elif ENVIRONMENT == 'test':
@@ -200,6 +201,35 @@ elif ENVIRONMENT == 'test':
     }
     print(f" Using TEST database: {os.getenv('DB_TEST_NAME')}")
 
+# Production (Render - PostgreSQL)
+else:
+    # Try to use DATABASE_URL first (for Render/Supabase)
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        DATABASES['default'] = dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            ssl_require=True
+        )
+        print(" Using PostgreSQL via DATABASE_URL (Production)")
+    else:
+        # Fallback to individual PostgreSQL settings
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('TIDB_DB_NAME'),  
+                'USER': os.getenv('TIDB_USER'),
+                'PASSWORD': os.getenv('TIDB_PASSWORD'),
+                'HOST': os.getenv('TIDB_HOST'),
+                'PORT': int(os.getenv('TIDB_PORT', 5432)),
+                'OPTIONS': {
+                    'sslmode': 'require',
+                },
+            }
+        }
+        print("F Using PostgreSQL with individual settings (Production)")
+
+"""
 # Production (Render - TiDB Cloud)
 else:
     TIDB_CA_PATH = os.getenv(
@@ -229,37 +259,7 @@ else:
         f"Using TiDB Cloud database (Production): "
         f"{os.getenv('TIDB_DB_NAME')} @ {os.getenv('TIDB_HOST')}"
     )
-
 """
-# Production (Render - PostgreSQL)
-else:
-    # Try to use DATABASE_URL first (for Render/Supabase)
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        DATABASES['default'] = dj_database_url.config(
-            default=database_url,
-            conn_max_age=600,
-            ssl_require=True
-        )
-        print(" Using PostgreSQL via DATABASE_URL (Production)")
-    else:
-        # Fallback to individual PostgreSQL settings
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.getenv('TIDB_DB_NAME'),  
-                'USER': os.getenv('TIDB_USER'),
-                'PASSWORD': os.getenv('TIDB_PASSWORD'),
-                'HOST': os.getenv('TIDB_HOST'),
-                'PORT': int(os.getenv('TIDB_PORT', 5432)),
-                'OPTIONS': {
-                    'sslmode': 'require',
-                },
-            }
-        }
-        print("F Using PostgreSQL with individual settings (Production)")
-"""
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
