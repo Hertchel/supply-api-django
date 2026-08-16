@@ -1,10 +1,17 @@
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework_simplejwt.views import TokenRefreshView
-
 from api.views import ActivateUserAPIView, LoginTokenObtainPairView, OTPVerificationView, RegisterUserAPIView, LoginTokenOfflineView, CheckAuthView, RefreshTokenView, LogoutView, ResendOTPView, FundClusterListView, OfficeListView
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({
+        "status": "ok",
+        "service": "Supply API",
+    })
 
 urlpatterns = [
+    path("", health_check, name="health-check"),
     path('admin/', admin.site.urls),
     path('api/user/check_auth', CheckAuthView.as_view(), name='user_info'),
     path('api/user/register/', RegisterUserAPIView.as_view(), name='register'),
