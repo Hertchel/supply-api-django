@@ -16,6 +16,7 @@ from .models import CustomUser
 
 from .models import (
     Item,
+    SupplierProfile,
     Supplier,
     SupplierItem,
     AbstractOfQuotation
@@ -450,10 +451,51 @@ class ItemSerializer(serializers.ModelSerializer):
         
 
 class RequestForQuotationSerializer(serializers.ModelSerializer):
+
+    supplier_profile_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
     class Meta:
         model = RequestForQuotation
         fields = '__all__'
 
+    @transaction.atomic
+    def create(self, validated_data):
+        supplier_profile_id = validated_data.pop(
+            "supplier_profile_id",
+            None
+        )
+
+        if supplier_profile_id:
+            supplier_profile = SupplierProfile.objects.get(
+                supplier_profile_id=supplier_profile_id
+            )
+
+        else:
+            supplier_profile = SupplierProfile.objects.create(
+                name=validated_data.get("supplier_name", ""),
+                address=validated_data.get("supplier_address", ""),
+                tin=validated_data.get("tin", "") or "",
+            )
+
+        rfq = RequestForQuotation.objects.create(
+            **validated_data
+        )
+
+        supplier = Supplier.objects.create(
+            supplier_no=str(uuid.uuid4()),
+            supplier_profile=supplier_profile,
+
+            name=supplier_profile.name,
+            address=supplier_profile.address,
+            contact_person=supplier_profile.contact_person,
+            contact_number=supplier_profile.contact_number,
+            tin=supplier_profile.tin,
+
+            rfq=rfq,
+        )
+
+        return rfq
+
+    """
     @transaction.atomic
     def create(self, validated_data):
         rfq = RequestForQuotation.objects.create(**validated_data)
@@ -469,6 +511,7 @@ class RequestForQuotationSerializer(serializers.ModelSerializer):
         )
 
         return rfq
+        """
 
 class ItemQuotationSerializer(serializers.ModelSerializer):
     item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all(), write_only=True)
@@ -502,6 +545,10 @@ class BACMemberSerializer(serializers.ModelSerializer):
         model = BACMember
         fields = '__all__' 
 
+class SupplierProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SupplierProfile
+        fields = '__all__'
 
 class SupplierSerializer(serializers.ModelSerializer):
     aoq = serializers.PrimaryKeyRelatedField(queryset=AbstractOfQuotation.objects.all(), write_only=True, required=False, allow_null=True)

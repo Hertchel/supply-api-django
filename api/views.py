@@ -1023,6 +1023,20 @@ class AbstractOfQuotationDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
 
+class SupplierProfileList(generics.ListCreateAPIView):
+    queryset = SupplierProfile.objects.all().order_by('name')
+    serializer_class = SupplierProfileSerializer
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+class SupplierProfileDetail(generics.RetrieveUpdateDestroyAPIView):
+    queryset = SupplierProfile.objects.all()
+    serializer_class = SupplierProfileSerializer
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'supplier_profile_id'
+
+
 class SupplierList(generics.ListCreateAPIView):
     """
     List all Supplier, or create a new Supplier

@@ -43,14 +43,14 @@ urlpatterns = [
     path('supplier/', SupplierList.as_view()),
     path('supplier/<str:pk>', SupplierDetail.as_view()),
     path('supplier/<str:pk>/update/', SupplierUpdateIsAddedToTrueView.as_view()),
-
     path('supplier-item/', SupplierItemList.as_view()),
     path('supplier-item/<str:pk>', SupplierItemDetail.as_view()),
+    path('supplier-profile/', SupplierProfileList.as_view()),
+    path('supplier-profile/<uuid:supplier_profile_id>', SupplierProfileDetail.as_view()),
 
     path('purchase-order/', PurchaseOrderList.as_view()),
     path('purchase-order/<str:pk>', PurchaseOrderDetail.as_view()),
     path('purchase-order/<str:pk>/update-status/', PurchaseOrderStatusUpdateView.as_view()),
-
     path('purchase-order-item/', PurchaseOrderItemList.as_view()),
     path('purchase-order-item/<str:pk>', PurchaseOrderItemDetail.as_view()),
 
@@ -68,19 +68,10 @@ urlpatterns = [
     path('requisition-slip/', RequisitionIssueSlipList.as_view()),
     path('requisition-slip/<str:pk>', RequisitionIssueSlipDetail.as_view()),
 
-    path(
-        'public/requisitioners/',
-        PublicRequisitionerList.as_view()
-        ),
+    path('public/requisitioners/', PublicRequisitionerList.as_view()),
 
-    path(
-        'requisitioner-dashboard/<uuid:token>/',
-        RequisitionerDashboardView.as_view()
-    ),
-    path(
-        'requisitioner/dashboard/',
-        AuthenticatedRequisitionerDashboardView.as_view()
-    ),
+    path('requisitioner-dashboard/<uuid:token>/', RequisitionerDashboardView.as_view()),
+    path('requisitioner/dashboard/', AuthenticatedRequisitionerDashboardView.as_view()),
 
     path('daily-report/bac', BACDailyReportView.as_view()),
     path('daily-report/supply', SupplyDailyReportView.as_view()),

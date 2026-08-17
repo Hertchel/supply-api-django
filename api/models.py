@@ -275,9 +275,20 @@ class AbstractOfQuotation(models.Model):
     def __str__(self):
         return f'Abstract of Quotation for {self.purchase_request.pr_no}'
 
+class SupplierProfile(models.Model):
+    supplier_profile_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255)
+    address = models.TextField()
+    contact_person = models.CharField(max_length=255, blank=True, default="")
+    contact_number = models.CharField(max_length=20, blank=True, default="")
+    tin = models.CharField(max_length=50, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.name
 class Supplier(models.Model):
     supplier_no = models.CharField(max_length=50, primary_key=True)
+    supplier_profile = models.ForeignKey(SupplierProfile, on_delete=models.PROTECT, related_name='supplier_records', null=True, blank=True)
     name = models.CharField(max_length=255)
     address = models.TextField()
     contact_person = models.CharField(max_length=255, blank=True, default="")
@@ -292,8 +303,6 @@ class Supplier(models.Model):
 
     def __str__(self):
         return self.name
-
-
 class SupplierItem(models.Model):
     supplier_item_no = models.CharField(max_length=50, primary_key=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='supplier_items')
