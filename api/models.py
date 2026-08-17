@@ -285,7 +285,7 @@ class Supplier(models.Model):
     tin = models.CharField(max_length=50)
     extra_character = models.CharField(max_length=1, blank=True, default="")
     aoq = models.ForeignKey(AbstractOfQuotation, on_delete=models.CASCADE, related_name='suppliers', null=True, blank=True)
-    rfq = models.ForeignKey(RequestForQuotation, on_delete=models.CASCADE, related_name='suppliers')
+    rfq = models.ForeignKey(RequestForQuotation, on_delete=models.SET_NULL, related_name='suppliers', null=True, blank=True)
     is_added = models.BooleanField(default=False)
     is_selected_winner = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
