@@ -1,5 +1,7 @@
 #SERIALIZERS
 import pyotp
+import uuid
+from django.db import transaction
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -448,11 +450,25 @@ class ItemSerializer(serializers.ModelSerializer):
         
 
 class RequestForQuotationSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = RequestForQuotation
         fields = '__all__'
 
+    @transaction.atomic
+    def create(self, validated_data):
+        rfq = RequestForQuotation.objects.create(**validated_data)
+
+        Supplier.objects.create(
+            supplier_no=str(uuid.uuid4()),
+            name=rfq.supplier_name,
+            address=rfq.supplier_address,
+            contact_person="",
+            contact_number="",
+            tin=rfq.tin or "",
+            rfq=rfq,
+        )
+
+        return rfq
 
 class ItemQuotationSerializer(serializers.ModelSerializer):
     item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all(), write_only=True)
@@ -488,7 +504,7 @@ class BACMemberSerializer(serializers.ModelSerializer):
 
 
 class SupplierSerializer(serializers.ModelSerializer):
-    aoq = serializers.PrimaryKeyRelatedField(queryset=AbstractOfQuotation.objects.all(), write_only=True)
+    aoq = serializers.PrimaryKeyRelatedField(queryset=AbstractOfQuotation.objects.all(), write_only=True, required=False, allow_null=True)
     aoq_details = AbstractOfQuotationSerializer(source='aoq', read_only=True)
 
     rfq = serializers.PrimaryKeyRelatedField(queryset=RequestForQuotation.objects.all(), write_only=True)

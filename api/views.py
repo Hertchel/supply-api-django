@@ -1395,7 +1395,7 @@ class RFQDetailView(APIView):
         ).filter(rfq_no__iexact=rfq_no.strip()).first()
 
         if not rfq:
-            print("❌ NOT FOUND IN DB")
+            print("NOT FOUND IN DB")
             print("Available RFQs:", list(
                 RequestForQuotation.objects.values_list("rfq_no", flat=True)
             ))
@@ -1405,7 +1405,7 @@ class RFQDetailView(APIView):
                 status=404
             )
 
-        print("✅ FOUND:", rfq.rfq_no)
+        print("FOUND:", rfq.rfq_no)
 
         serializer = RequestForQuotationDetailSerializer(rfq)
         return Response(serializer.data)
