@@ -187,49 +187,74 @@ class EditUserView(APIView):
 
 class LoginTokenObtainPairView(TokenObtainPairView):
     """
-    Login User credentials
+    Login User credentials without OTP verification.
     """
+
     serializer_class = LoginTokenObtainPairSerializer
     authentication_classes = []
     permission_classes = []
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
+
         try:
             serializer.is_valid(raise_exception=True)
             user = serializer.user
 
-            #Temporary solution to send OTP email before generating token
-            #send_otp_email(user)
+            # Generate JWT tokens immediately after successful login
+            refresh = RefreshToken.for_user(user)
 
-            #This will be used when domain is available and we can send email with activation link
-            # generate OTP
-            user.generate_otp()
+            # Update last login
+            user.last_login = timezone.now()
+            user.save()
 
-            subject = 'Your OTP Code'
-            #Uncomment this part once the email service is configured and working         
-            message_html = f'<p>Your OTP code is <strong>{user.otp_code}</strong>. It is valid for 5 minutes.</p>'
+            # Add custom claims to the refresh token
+            role = user.groups.first()
 
-            # send_OTP_mail(user.email, subject, message_html )
-            send_mail_resend(user.email, subject, message_html)
-            """
-            #This block of code is only temporary
-            #Comment this one if the above block of code can be used/working
-            message = (
-                f"Your OTP code is {user.otp_code}.\n\n"
-                "This OTP is valid for 5 minutes."
+            refresh['role'] = role.name if role else None
+            refresh['email'] = user.email
+            refresh['fullname'] = f'{user.first_name} {user.last_name}'
+
+            # User information returned to frontend
+            user_data = {
+                'id': user.id,
+                'email': user.email,
+                'role': role.name if role else None,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            }
+
+            # Create response
+            response = Response({
+                'message': 'Login Successfully',
+                'user': user_data,
+            }, status=status.HTTP_200_OK)
+
+            # Set refresh token cookie
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                httponly=True,
+                secure=True,
+                samesite='None' if not is_production else 'Lax'
             )
 
-            send_mail_django(
-                message,
-                subject,
-                user.email,
+            # Set access token cookie
+            response.set_cookie(
+                key='access_token',
+                value=str(refresh.access_token),
+                httponly=True,
+                secure=True,
+                samesite='None' if not is_production else 'Lax'
             )
-            """
 
-            return Response({'message': f"We've sent a verification code to {user.email}. Please check your inbox and verify your account.", 'email': user.email}, status=status.HTTP_200_OK)
+            return response
+
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
 class CheckAuthView(APIView):
     permission_classes = [IsAuthenticated]
