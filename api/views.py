@@ -25,13 +25,18 @@ from datetime import timedelta
 from django.utils.timezone import now
 from django.db.models.functions import TruncDate
 from django.db.models import Count
+from django.core import signing
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.contrib.auth.password_validation import validate_password
+
 #fund cluster and office imports
 from rest_framework import generics, permissions
 from .models import FundCluster, Office
 from .serializers import FundClusterSerializer, OfficeSerializer
 
 from .models import CustomUser
-from .serializers import UserSerializer
+from .serializers import UserSerializer, VerifyResetOTPSerializer
 
 from .serializers import ReviewerSerializer
 
@@ -417,14 +422,6 @@ class ForgotPasswordView(APIView):
     serializer_class = ResendOTPSerializer
 
     def post(self, request):
-        
-        print("========== FORGOT PASSWORD DEBUG ==========")
-        print("CONTENT TYPE:", request.content_type)
-        print("RAW BODY:", repr(request.body))
-        print("REQUEST DATA:", repr(request.data))
-        print("REQUEST DATA TYPE:", type(request.data))
-        print("PARSERS:", request.parsers)
-        print("==========================================")
 
         serializer = ResendOTPSerializer(data=request.data)
 
@@ -488,7 +485,139 @@ class ForgotPasswordView(APIView):
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
+class VerifyResetOTPView(APIView):
+    """
+    Verify an OTP specifically for password reset.
+    This does NOT authenticate the user.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    serializer_class = VerifyResetOTPSerializer
+
+    def post(self, request):
+        serializer = VerifyResetOTPSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        email = serializer.validated_data["email"]
+        otp_code = serializer.validated_data["otp_code"]
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {
+                    "error": "Invalid email or OTP."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.verify_otp(otp_code):
+            return Response(
+                {
+                    "error": "Invalid or expired OTP."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reset_token = signing.dumps(
+            {
+                "user_id": user.id,
+                "password_hash": user.password,
+            },
+            salt="password-reset",
+        )
+
+        return Response(
+            {
+                "message": "OTP verified successfully.",
+                "reset_token": reset_token,
+            },
+            status=status.HTTP_200_OK
+        )
+
+class ResetPasswordView(APIView):
+    """
+    Reset a user's password using a valid password-reset token.
+    This does NOT log the user in.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        reset_token = serializer.validated_data["reset_token"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            data = signing.loads(
+                reset_token,
+                salt="password-reset",
+                max_age=600,  # 10 minutes
+            )
+        except signing.BadSignature:
+            return Response(
+                {
+                    "error": "Invalid or expired password reset token."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user_id = data.get("user_id")
+        password_hash = data.get("password_hash")
+
+        try:
+            user = CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
+            return Response(
+                {
+                    "error": "Invalid password reset token."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Prevent reuse of an old reset token after the password changes.
+        if user.password != password_hash:
+            return Response(
+                {
+                    "error": "This password reset token is no longer valid."
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate the new password using Django's configured validators.
+        try:
+            validate_password(new_password, user)
+        except ValidationError as error:
+            return Response(
+                {
+                    "error": error.messages
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(new_password)
+        user.save()
+
+        return Response(
+            {
+                "message": "Password reset successfully."
+            },
+            status=status.HTTP_200_OK
+        )
 class RefreshTokenView(APIView):
     permission_classes = []
     authentication_classes = []

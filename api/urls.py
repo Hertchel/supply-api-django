@@ -14,6 +14,8 @@ urlpatterns = [
     path('user/<int:pk>/edit/', EditUserView.as_view()),
     path('user/change-password/', ChangePasswordView.as_view()),
     path('user/forgot-password/', ForgotPasswordView.as_view()),
+    path('user/verify-reset-otp/', VerifyResetOTPView.as_view()),
+    path('user/reset-password/', ResetPasswordView.as_view()),
 
     path('campus-director/', CampusDirectorList.as_view()),
     path('campus-director/<str:pk>', CampusDirectorDetail.as_view()),

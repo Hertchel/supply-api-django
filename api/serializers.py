@@ -264,7 +264,16 @@ class OTPVerificationSerializer(serializers.Serializer):
 class ResendOTPSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
+class VerifyResetOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp_code = serializers.CharField(max_length=10)
 
+class ResetPasswordSerializer(serializers.Serializer):
+    reset_token = serializers.CharField()
+    new_password = serializers.CharField(
+        write_only=True,
+        min_length=8
+    )
 class CampusDirectorSerializer(serializers.ModelSerializer):
     
     class Meta: 
