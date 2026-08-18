@@ -1,4 +1,6 @@
 #VIEW
+from urllib import request
+
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 
@@ -406,6 +408,87 @@ class ResendOTPView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ForgotPasswordView(APIView):
+    """
+    Send an OTP to the user's email for password reset.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    serializer_class = ResendOTPSerializer
+
+    def post(self, request):
+        
+        print("========== FORGOT PASSWORD DEBUG ==========")
+        print("CONTENT TYPE:", request.content_type)
+        print("RAW BODY:", repr(request.body))
+        print("REQUEST DATA:", repr(request.data))
+        print("REQUEST DATA TYPE:", type(request.data))
+        print("PARSERS:", request.parsers)
+        print("==========================================")
+
+        serializer = ResendOTPSerializer(data=request.data)
+
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+
+            try:
+                user = CustomUser.objects.get(email=email)
+
+                # Generate a new OTP
+                user.generate_otp()
+
+                subject = "Password Reset OTP"
+
+                message_html = f"""
+                <p>Hello <strong>{user.first_name}</strong>,</p>
+
+                <p>We received a request to reset your Supply Office account password.</p>
+
+                <p>Your password reset verification code is:</p>
+
+                <h2 style="letter-spacing: 4px;">
+                    {user.otp_code}
+                </h2>
+
+                <p>This OTP is valid for 5 minutes.</p>
+
+                <p>
+                    If you did not request a password reset, please ignore this email.
+                </p>
+
+                <p>
+                    Best regards,<br>
+                    Supply Office<br>
+                    Team SlapSoil
+                </p>
+                """
+
+                if is_production:
+                    send_mail_resend(
+                        user.email,
+                        subject,
+                        message_html
+                    )
+                else:
+                    print(
+                        f"[PASSWORD RESET OTP] "
+                        f"{user.email}: {user.otp_code}"
+                    )
+
+                return Response({
+                    "message": "Password reset OTP has been sent to your email address."
+                }, status=status.HTTP_200_OK)
+
+            except CustomUser.DoesNotExist:
+                return Response({
+                    "error": "User does not exist with this email address."
+                }, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
 class RefreshTokenView(APIView):
     permission_classes = []
     authentication_classes = []
