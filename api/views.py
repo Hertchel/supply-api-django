@@ -119,6 +119,7 @@ class RegisterUserAPIView(generics.CreateAPIView):
                                 <p>Best regards,</p>
                                 <p>Supply Office<br>
                                 Team SlapSoil<br>
+                                Team FineWorks<br>
                                 </p>'''
                 subject = "Account Created Successfully - Pending Activation"
 
@@ -243,7 +244,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
                 value=str(refresh),
                 httponly=True,
                 secure=True,
-                samesite='None' if not is_production else 'Lax'
+                samesite='None'
             )
 
             # Set access token cookie
@@ -252,7 +253,7 @@ class LoginTokenObtainPairView(TokenObtainPairView):
                 value=str(refresh.access_token),
                 httponly=True,
                 secure=True,
-                samesite='None' if not is_production else 'Lax'
+                samesite='None'
             )
 
             return response
@@ -330,14 +331,14 @@ class OTPVerificationView(APIView):
                         value=str(refresh),
                         httponly=True,
                         secure=True,
-                        samesite='None' if not is_production else 'Lax'
+                        samesite='None'
                     )
                     response.set_cookie(
                         key='access_token',
                         value=str(refresh.access_token),
                         httponly=True,
                         secure=True, 
-                        samesite='None' if not is_production else 'Lax'
+                        samesite='None'
                     )
 
                     return response
@@ -390,7 +391,8 @@ class ResendOTPView(APIView):
                 <p>
                 Best regards,<br>
                 Supply Office<br>
-                Team SlapSoil
+                Team SlapSoil<br>
+                Team FineWorks<br>
                 </p>
                 """
 
@@ -456,7 +458,8 @@ class ForgotPasswordView(APIView):
                 <p>
                     Best regards,<br>
                     Supply Office<br>
-                    Team SlapSoil
+                    Team SlapSoil<br>
+                    Team FineWorks<br>
                 </p>
                 """
 
@@ -774,6 +777,7 @@ class SendFileView(APIView):
         <p>Best regards,</p>
             <p>Supply Office<br>
             Team SlapSoil<br>
+            Team FineWorks<br>
         </div>
         """
 
@@ -1002,6 +1006,7 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
             <p>Best regards,</p>
             <p>Supply Office<br>
             Team SlapSoil<br>
+            Team FineWorks<br>
             </p>'''
         if not is_active_before and user.is_active:
             send_mail_resend(user.email, "Account Activation Successfull", message_html)
