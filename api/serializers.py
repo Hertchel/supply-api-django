@@ -13,6 +13,8 @@ from .models import *
 from django.utils import timezone
 
 from .models import CustomUser
+from rest_framework import serializers
+from .models import Item
 
 from .models import (
     Item,
@@ -21,6 +23,7 @@ from .models import (
     SupplierItem,
     AbstractOfQuotation
 )
+from .models import PurchaseRequest
 
 User = get_user_model()
 
@@ -445,6 +448,46 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             return supplier_item.supplier.name
 
         return None
+
+class BulkItemImportSerializer(serializers.Serializer):
+    purchase_request = serializers.CharField()
+    items = serializers.ListField(
+        child=serializers.DictField(),
+        allow_empty=False
+    )
+
+    def validate_purchase_request(self, value):
+        if not PurchaseRequest.objects.filter(pr_no=value).exists():
+            raise serializers.ValidationError(
+                "Purchase Request does not exist."
+            )
+
+        return value
+
+    def validate_items(self, items):
+        required_fields = [
+            "item_no",
+            "stock_property_no",
+            "unit",
+            "item_description",
+            "quantity",
+            "unit_cost",
+        ]
+
+        for index, item in enumerate(items):
+            missing_fields = [
+                field
+                for field in required_fields
+                if field not in item
+            ]
+
+            if missing_fields:
+                raise serializers.ValidationError(
+                    f"Item {index + 1} is missing: "
+                    f"{', '.join(missing_fields)}"
+                )
+
+        return items
         
 class ItemSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)

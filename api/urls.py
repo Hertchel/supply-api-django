@@ -27,6 +27,7 @@ urlpatterns = [
     path('item/<str:pk>', ItemDetail.as_view()),
     path('item/<str:field_name>/<str:value>/', ItemsDetail.as_view()),
     path('purchase-request/item/filter/', ItemsFilterListView.as_view()),
+    path('item/bulk-import/', BulkItemImportView.as_view()),
 
     path('purchase-request/', PurchaseRequestList.as_view()),
     path('purchase-request/<str:pk>', PurchaseRequestDetail.as_view()),

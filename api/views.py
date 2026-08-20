@@ -37,6 +37,7 @@ from .serializers import FundClusterSerializer, OfficeSerializer
 
 from .models import CustomUser
 from .serializers import UserSerializer, VerifyResetOTPSerializer
+from .serializers import BulkItemImportSerializer
 
 from .serializers import ReviewerSerializer
 
@@ -47,6 +48,11 @@ from .models import *
 
 from .resend import send_mail_resend, send_file
 #from api.resend import send_mail_django
+
+from django.db import transaction
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
 
 #from .utils import send_otp_email
 from rest_framework.generics import RetrieveAPIView
@@ -1013,6 +1019,71 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
 
         return response
 
+
+class BulkItemImportView(APIView):
+
+    def post(self, request):
+        serializer = BulkItemImportSerializer(
+            data=request.data
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "status": "error",
+                    "errors": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        purchase_request = serializer.validated_data[
+            "purchase_request"
+        ]
+
+        items = serializer.validated_data["items"]
+
+        try:
+            with transaction.atomic():
+
+                created_items = []
+
+                for item_data in items:
+                    item = Item.objects.create(
+                        purchase_request_id=purchase_request,
+                        item_no=item_data["item_no"],
+                        stock_property_no=item_data[
+                            "stock_property_no"
+                        ],
+                        unit=item_data["unit"],
+                        item_description=item_data[
+                            "item_description"
+                        ],
+                        quantity=item_data["quantity"],
+                        unit_cost=item_data["unit_cost"],
+                    )
+
+                    created_items.append(item)
+
+            return Response(
+                {
+                    "status": "success",
+                    "message": (
+                        f"{len(created_items)} items "
+                        "imported successfully."
+                    ),
+                    "imported_count": len(created_items),
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        except Exception as error:
+            return Response(
+                {
+                    "status": "error",
+                    "message": str(error),
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
 class ItemList(generics.ListCreateAPIView):
     """
