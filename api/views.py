@@ -1036,11 +1036,42 @@ class BulkItemImportView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        purchase_request = serializer.validated_data[
-            "purchase_request"
-        ]
-
+        purchase_request = serializer.validated_data["purchase_request"]
         items = serializer.validated_data["items"]
+
+        existing_descriptions = set(
+            Item.objects.filter(
+                purchase_request_id=purchase_request
+            ).values_list(
+                "item_description",
+                flat=True
+            )
+        )
+        existing_descriptions = {
+            description.strip().lower()
+            for description in existing_descriptions
+        }
+
+        duplicates = []
+        items_to_create = []
+
+        seen_descriptions = set(existing_descriptions)
+
+        for item_data in items:
+            description = (
+                item_data["item_description"]
+                .strip()
+                .lower()
+            )
+
+            if description in seen_descriptions:
+                duplicates.append(
+                    item_data["item_description"]
+                )
+                continue
+
+            seen_descriptions.add(description)
+            items_to_create.append(item_data)
 
         try:
             with transaction.atomic():
@@ -1068,10 +1099,11 @@ class BulkItemImportView(APIView):
                 {
                     "status": "success",
                     "message": (
-                        f"{len(created_items)} items "
-                        "imported successfully."
+                        f"{len(created_items)} items imported successfully."
                     ),
                     "imported_count": len(created_items),
+                    "skipped_count": len(duplicates),
+                    "duplicates": duplicates,
                 },
                 status=status.HTTP_201_CREATED,
             )

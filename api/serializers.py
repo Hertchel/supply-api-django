@@ -487,6 +487,26 @@ class BulkItemImportSerializer(serializers.Serializer):
                     f"{', '.join(missing_fields)}"
                 )
 
+            if not item["unit"]:
+                raise serializers.ValidationError(
+                    f"Item {index + 1}: unit is required."
+                )
+
+            if not item["item_description"]:
+                raise serializers.ValidationError(
+                    f"Item {index + 1}: item description is required."
+                )
+
+            if float(item["quantity"]) <= 0:
+                raise serializers.ValidationError(
+                    f"Item {index + 1}: quantity must be greater than 0."
+                )
+
+            if float(item["unit_cost"]) < 0:
+                raise serializers.ValidationError(
+                    f"Item {index + 1}: unit cost cannot be negative."
+                )
+
         return items
         
 class ItemSerializer(serializers.ModelSerializer):
