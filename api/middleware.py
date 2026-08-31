@@ -7,7 +7,7 @@ from django.utils.functional import SimpleLazyObject
 from django.contrib.auth import get_user_model
 from .utils import set_current_user, get_current_user
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) 
 
 User = get_user_model()
 
