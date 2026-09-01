@@ -1787,8 +1787,6 @@ class ReviewerDetailView(
         is_reviewer=True
     )
 
-    serializer_class = UserSerializer
-
+    serializer_class = ReviewerSerializer
     authentication_classes = [CookieJWTAuthentication]
-
     permission_classes = [IsAuthenticated]
