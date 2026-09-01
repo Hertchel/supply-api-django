@@ -43,6 +43,7 @@ class ReviewerSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "email",
+            "designation",
             "is_reviewer"
         ]
 

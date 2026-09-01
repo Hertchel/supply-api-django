@@ -40,6 +40,7 @@ class CustomUser(AbstractUser):
     otp_secret = models.CharField(max_length=32, null=True, blank=True)
 
     is_reviewer = models.BooleanField(default=False)
+    designation = models.CharField(max_length=255, blank=True, null=True)
 
     ROLE_CHOICES = [
         ("admin", "Admin"),
@@ -115,11 +116,8 @@ class Requesitioner(models.Model):
     )
 
     name = models.CharField(max_length=255)
-
     gender = models.CharField(max_length=50)
-
     department = models.CharField(max_length=100)
-
     designation = models.CharField(max_length=150)
 
     # NEW
