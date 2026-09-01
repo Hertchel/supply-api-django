@@ -510,9 +510,45 @@ class BulkItemImportSerializer(serializers.Serializer):
         return items
         
 class ItemPurchaseRequestSerializer(serializers.ModelSerializer):
+    requisitioner_details = RequesitionerSerializer(
+        source='requisitioner',
+        read_only=True
+    )
+
+    campus_director_details = CampusDirectorSerializer(
+        source='campus_director',
+        read_only=True
+    )
+
+    office_details = OfficeSerializer(
+        source='office',
+        read_only=True
+    )
+
+    reviewed_by_details = serializers.SerializerMethodField()
+
+    def get_reviewed_by_details(self, obj):
+        if obj.reviewed_by:
+            return {
+                "id": obj.reviewed_by.id,
+                "name": f"{obj.reviewed_by.first_name} {obj.reviewed_by.last_name}",
+                "email": obj.reviewed_by.email,
+            }
+
+        return None
+
     class Meta:
         model = PurchaseRequest
-        fields = ['pr_no']
+        fields = [
+            'pr_no',
+            'fund_cluster',
+            'office_details',
+            'purpose',
+            'created_at',
+            'requisitioner_details',
+            'reviewed_by_details',
+            'campus_director_details',
+        ]
 
 
 class ItemSerializer(serializers.ModelSerializer):

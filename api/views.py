@@ -1154,7 +1154,13 @@ class ItemsDetail(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         filter_kwargs = {field_name: value}
-        items = Item.objects.select_related("purchase_request").filter(**filter_kwargs)
+        items = Item.objects.select_related(
+            "purchase_request",
+            "purchase_request__requisitioner",
+            "purchase_request__campus_director",
+            "purchase_request__office",
+            "purchase_request__reviewed_by",
+        ).filter(**filter_kwargs)
 
         if not items.exists():
             return Response({
