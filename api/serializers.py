@@ -402,10 +402,9 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
 
             return {
                 "id": obj.reviewed_by.id,
-                "name":
-                f"{obj.reviewed_by.first_name} "
-                f"{obj.reviewed_by.last_name}",
-                "email": obj.reviewed_by.email
+                "name":f"{obj.reviewed_by.first_name} " f"{obj.reviewed_by.last_name}",
+                "email": obj.reviewed_by.email,
+                "designation": obj.reviewed_by.designation,
             }
 
         return None
