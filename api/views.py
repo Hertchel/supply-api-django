@@ -1121,7 +1121,7 @@ class ItemList(generics.ListCreateAPIView):
     """
     List all Item, or create a new item
     """
-    queryset = Item.objects.all()
+    queryset = Item.objects.select_related("purchase_request")
     serializer_class = ItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -1131,7 +1131,7 @@ class ItemDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, Update or Delete a Item instance
     """
-    queryset = Item.objects.all()
+    queryset = Item.objects.select_related("purchase_request")
     serializer_class = ItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -1154,7 +1154,7 @@ class ItemsDetail(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         filter_kwargs = {field_name: value}
-        items = Item.objects.filter(**filter_kwargs)
+        items = Item.objects.select_related("purchase_request").filter(**filter_kwargs)
 
         if not items.exists():
             return Response({

@@ -509,9 +509,16 @@ class BulkItemImportSerializer(serializers.Serializer):
 
         return items
         
+class ItemPurchaseRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PurchaseRequest
+        fields = ['pr_no']
+
+
 class ItemSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)
-    pr_details = PurchaseRequestSerializer(source='purchase_request', read_only=True)
+
+    pr_details = ItemPurchaseRequestSerializer(source='purchase_request', read_only=True)
 
     class Meta:
         model = Item
