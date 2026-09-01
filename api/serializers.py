@@ -533,6 +533,7 @@ class ItemPurchaseRequestSerializer(serializers.ModelSerializer):
                 "id": obj.reviewed_by.id,
                 "name": f"{obj.reviewed_by.first_name} {obj.reviewed_by.last_name}",
                 "email": obj.reviewed_by.email,
+                "designation": obj.reviewed_by.designation,
             }
 
         return None
