@@ -1426,9 +1426,21 @@ class SupplierUpdateIsAddedToTrueView(APIView):
 
 class SupplierItemList(generics.ListCreateAPIView):
     """
-    List all Item, or create a new Item
+    List all SupplierItem, or create a new SupplierItem
     """
-    queryset = SupplierItem.objects.all()
+    queryset = SupplierItem.objects.select_related(
+        "supplier",
+        "supplier__aoq",
+        "supplier__aoq__purchase_request",
+        "supplier__rfq",
+        "supplier__rfq__purchase_request",
+        "rfq",
+        "rfq__purchase_request",
+        "item_quotation",
+        "item_quotation__item",
+        "item_quotation__item__purchase_request",
+    )
+
     serializer_class = SupplierItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
