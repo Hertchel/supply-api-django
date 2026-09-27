@@ -1,11 +1,8 @@
 #VIEW
 from urllib import request
-
 from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
-
 from django.db import IntegrityError, transaction
-
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, status
@@ -29,26 +26,19 @@ from django.core import signing
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
-
 #fund cluster and office imports
 from rest_framework import generics, permissions
 from .models import FundCluster, Office
 from .serializers import FundClusterSerializer, OfficeSerializer
-
 from .models import CustomUser
 from .serializers import UserSerializer, VerifyResetOTPSerializer
 from .serializers import BulkItemImportSerializer
-
 from .serializers import ReviewerSerializer
-
 from rest_framework.generics import ListAPIView
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import *
 from .models import *
-
 from .resend import send_mail_resend, send_file
-#from api.resend import send_mail_django
-
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
@@ -56,8 +46,6 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-
-#from .utils import send_otp_email
 from rest_framework.generics import RetrieveAPIView
 from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
@@ -65,22 +53,17 @@ from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
 is_production = os.getenv('IS_PRODUCTION', 'False').lower() == 'true'
-
 
 def generate_ics_number():
     current_year = timezone.now().year
-
     with transaction.atomic():
         sequence, created = ICSNumberSequence.objects.select_for_update().get_or_create(
             year=current_year,
             defaults={"last_number": 0}
         )
-
         sequence.last_number += 1
         sequence.save(update_fields=["last_number"])
-
         return f"ICS-{current_year}-{sequence.last_number:04d}"
 
 @api_view(["POST"])
@@ -94,13 +77,11 @@ def create_inventory_custodian_slip(request):
             {"error": "Purchase order is required."},
             status=status.HTTP_400_BAD_REQUEST
         )
-
     if not delivered_items:
         return Response(
             {"error": "At least one delivered item is required."},
             status=status.HTTP_400_BAD_REQUEST
         )
-
     try:
         purchase_order = PurchaseOrder.objects.get(
             po_no=purchase_order_id
@@ -110,11 +91,9 @@ def create_inventory_custodian_slip(request):
             {"error": "Purchase order does not exist."},
             status=status.HTTP_404_NOT_FOUND
         )
-
+    
     with transaction.atomic():
-
         ics_no = generate_ics_number()
-
         ics = InventoryCustodianSlip.objects.create(
             ics_no=ics_no,
             purchase_order=purchase_order,
@@ -122,20 +101,16 @@ def create_inventory_custodian_slip(request):
         )
 
         for item in delivered_items:
-
             delivered_item_id = item.get("delivered_item")
             quantity = item.get("quantity")
-
             if not delivered_item_id:
                 raise serializers.ValidationError(
                     "Delivered item is required."
                 )
-
             if not quantity:
                 raise serializers.ValidationError(
                     "Quantity is required."
                 )
-
             try:
                 delivered_item = DeliveredItems.objects.get(
                     delivery_id=delivered_item_id
@@ -144,12 +119,10 @@ def create_inventory_custodian_slip(request):
                 raise serializers.ValidationError(
                     f"Delivered item '{delivered_item_id}' does not exist."
                 )
-
             if quantity <= 0:
                 raise serializers.ValidationError(
                     "Quantity must be greater than 0."
                 )
-
             if quantity > delivered_item.quantity_delivered:
                 raise serializers.ValidationError(
                     f"Quantity for {delivered_item_id} cannot exceed "
@@ -161,9 +134,7 @@ def create_inventory_custodian_slip(request):
                 delivered_item=delivered_item,
                 quantity=quantity
             )
-
     serializer = InventoryCustodianSlipSerializer(ics)
-
     return Response(
         serializer.data,
         status=status.HTTP_201_CREATED
@@ -186,27 +157,6 @@ class RegisterUserAPIView(generics.CreateAPIView):
             try:
                 user = serializer.save()
                 user.save()
-                """
-# ==========================================================================================
-                # AUTO CREATE BAC MEMBER PROFILE             
-                if user.role == "bac":
-
-                    bac_count = BACMember.objects.count() + 1
-
-                    created_bac = BACMember.objects.create(
-                        member_id=f"BAC-{timezone.now().year}-{bac_count:04d}",
-                        user=user,
-                        name=f"{user.first_name} {user.last_name}",
-                        designation="BAC Member",
-                        position="Member"
-                    )
-
-                    print("BAC MEMBER CREATED:", created_bac.member_id)
-                    print("BAC MEMBER NAME:", created_bac.name)
-                    print("TOTAL BAC MEMBERS:", BACMember.objects.count())
-# ===========================================================================================
-                """
-
                 token = get_tokens_for_user(user)
 
                 # Get the current domain

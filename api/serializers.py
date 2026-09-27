@@ -666,6 +666,58 @@ class SupplierProfileSerializer(serializers.ModelSerializer):
         model = SupplierProfile
         fields = '__all__'
 
+    def validate(self, attrs):
+        name = attrs.get("name", "").strip()
+        address = attrs.get("address", "").strip()
+        tin = attrs.get("tin", "").strip()
+
+        if not name:
+            raise serializers.ValidationError({
+                "name": "Supplier name is required."
+            })
+
+        if not address:
+            raise serializers.ValidationError({
+                "address": "Supplier address is required."
+            })
+
+        if tin and tin.upper() != "N/A":
+            existing_supplier = SupplierProfile.objects.filter(
+                tin__iexact=tin
+            ).first()
+
+            if existing_supplier:
+                raise serializers.ValidationError({
+                    "duplicate": True,
+                    "supplier_profile_id": str(
+                        existing_supplier.supplier_profile_id
+                    ),
+                    "message": (
+                        f"A supplier with TIN {existing_supplier.tin} "
+                        "already exists."
+                    ),
+                })
+
+        else:
+            existing_supplier = SupplierProfile.objects.filter(
+                name__iexact=name,
+                address__iexact=address,
+            ).first()
+
+            if existing_supplier:
+                raise serializers.ValidationError({
+                    "duplicate": True,
+                    "supplier_profile_id": str(
+                        existing_supplier.supplier_profile_id
+                    ),
+                    "message": (
+                        "A supplier with the same name and address "
+                        "already exists."
+                    ),
+                })
+
+        return attrs
+
 class SupplierSerializer(serializers.ModelSerializer):
     aoq = serializers.PrimaryKeyRelatedField(queryset=AbstractOfQuotation.objects.all(), write_only=True, required=False, allow_null=True)
     aoq_details = AbstractOfQuotationSerializer(source='aoq', read_only=True)
