@@ -682,9 +682,16 @@ class SupplierProfileSerializer(serializers.ModelSerializer):
             })
 
         if tin and tin.upper() != "N/A":
-            existing_supplier = SupplierProfile.objects.filter(
+            queryset = SupplierProfile.objects.filter(
                 tin__iexact=tin
-            ).first()
+            )
+
+            if self.instance:
+                queryset = queryset.exclude(
+                    supplier_profile_id=self.instance.supplier_profile_id
+                )
+
+            existing_supplier = queryset.first()
 
             if existing_supplier:
                 raise serializers.ValidationError({
@@ -699,10 +706,17 @@ class SupplierProfileSerializer(serializers.ModelSerializer):
                 })
 
         else:
-            existing_supplier = SupplierProfile.objects.filter(
+            queryset = SupplierProfile.objects.filter(
                 name__iexact=name,
                 address__iexact=address,
-            ).first()
+            )
+
+            if self.instance:
+                queryset = queryset.exclude(
+                    supplier_profile_id=self.instance.supplier_profile_id
+                )
+
+            existing_supplier = queryset.first()
 
             if existing_supplier:
                 raise serializers.ValidationError({
