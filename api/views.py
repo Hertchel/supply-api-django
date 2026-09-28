@@ -1377,6 +1377,24 @@ class RequestForQuotationList(generics.ListCreateAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+
+        # Convert frontend field name to Django model field name
+        if "is_VAT" in data:
+            data["is_vat"] = data["is_VAT"]
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers
+        )
+
 
 class ItemQuotationDetail(generics.RetrieveUpdateDestroyAPIView):
     """
