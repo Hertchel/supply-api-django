@@ -630,9 +630,12 @@ class RequestForQuotationSerializer(serializers.ModelSerializer):
         """
 
 class ItemQuotationSerializer(serializers.ModelSerializer):
-    item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all(), write_only=True)
+    item = serializers.PrimaryKeyRelatedField(
+        queryset=Item.objects.all(),
+        write_only=True
+    )
     item_details = ItemSerializer(source='item', read_only=True)
-    
+
     class Meta:
         model = ItemQuotation
         fields = '__all__'
@@ -640,6 +643,28 @@ class ItemQuotationSerializer(serializers.ModelSerializer):
             'item': {'write_only': True},
             'item_details': {'read_only': True}
         }
+
+    def validate(self, attrs):
+        item = attrs.get(
+            "item",
+            getattr(self.instance, "item", None)
+        )
+
+        unit_price = attrs.get(
+            "unit_price",
+            getattr(self.instance, "unit_price", None)
+        )
+
+        if item and unit_price is not None:
+            if unit_price > item.unit_cost:
+                raise serializers.ValidationError({
+                    "unit_price": (
+                        f"Quoted price cannot exceed the PR unit cost "
+                        f"of ₱{item.unit_cost:.2f}."
+                    )
+                })
+
+        return attrs
 
 
 class AbstractOfQuotationSerializer(serializers.ModelSerializer):
