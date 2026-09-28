@@ -281,6 +281,7 @@ class SupplierProfile(models.Model):
     contact_person = models.CharField(max_length=255, blank=True, default="")
     contact_number = models.CharField(max_length=20, blank=True, default="")
     tin = models.CharField(max_length=50, blank=True, default="")
+    is_VAT = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
