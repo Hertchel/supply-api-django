@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
+from .utils import set_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,8 @@ class CookieJWTAuthentication(JWTAuthentication):
             if not user_id:
                 raise AuthenticationFailed("Invalid token: user_id not found")
             
-            user = self.get_user(validated_token)  
+            user = self.get_user(validated_token)
+            set_current_user(user)
             print(
                 "AUTHENTICATED USER:",
                 user.id,
@@ -40,8 +42,9 @@ class CookieJWTAuthentication(JWTAuthentication):
                 user.email,
                 user.role,
             )
-            
+
             return (user, validated_token)
+        
         except AuthenticationFailed as e:
             logger.warning(f"Token validation failed: {str(e)}")
             raise AuthenticationFailed(f"Token validation failed: {str(e)}")
