@@ -49,6 +49,8 @@ from rest_framework import status
 from rest_framework.generics import RetrieveAPIView
 from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
+from django.contrib.contenttypes.models import ContentType
+from .middleware import get_user_role
 from dotenv import load_dotenv
 import os
 
@@ -891,8 +893,6 @@ class TrackStatusListView(ListAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-
-
 class UserList(generics.ListCreateAPIView):
     """
     List all Users or Create new User
@@ -902,7 +902,27 @@ class UserList(generics.ListCreateAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        user = serializer.save()
 
+        try:
+            RecentActivity.objects.create(
+                user=self.request.user,
+                user_role=get_user_role(self.request.user),
+                activity_type="Added",
+                content_type=ContentType.objects.get_for_model(CustomUser),
+                object_id=str(user.pk),
+            )
+
+            print(
+                f"ADMIN ACCOUNT ACTIVITY: "
+                f"{self.request.user} Added account {user}"
+            )
+
+        except Exception as e:
+            print(
+                f"ERROR CREATING ADMIN ACCOUNT ACTIVITY: {e}"
+            )
 class RequisitionerList(generics.ListCreateAPIView):
     """
     List all Requisitioner or Create new Requisitioner
@@ -1058,8 +1078,6 @@ class BACMemberDetail(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = BACMemberSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
-
 class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, Update or Delete a User
@@ -1069,31 +1087,101 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def perform_update(self, serializer):
+        user = serializer.save()
+
+        try:
+            RecentActivity.objects.create(
+                user=self.request.user,
+                user_role=get_user_role(self.request.user),
+                activity_type="Updated",
+                content_type=ContentType.objects.get_for_model(CustomUser),
+                object_id=str(user.pk),
+            )
+
+            print(
+                f"ADMIN ACCOUNT ACTIVITY: "
+                f"{self.request.user} Updated account {user}"
+            )
+
+        except Exception as e:
+            print(
+                f"ERROR CREATING ADMIN ACCOUNT UPDATE ACTIVITY: {e}"
+            )
+
+    def perform_destroy(self, instance):
+        user_id = instance.pk
+        user_name = str(instance)
+
+        try:
+            RecentActivity.objects.create(
+                user=self.request.user,
+                user_role=get_user_role(self.request.user),
+                activity_type="Deleted",
+                content_type=ContentType.objects.get_for_model(CustomUser),
+                object_id=str(user_id),
+            )
+
+            print(
+                f"ADMIN ACCOUNT ACTIVITY: "
+                f"{self.request.user} Deleted account {user_name}"
+            )
+
+        except Exception as e:
+            print(
+                f"ERROR CREATING ADMIN ACCOUNT DELETE ACTIVITY: {e}"
+            )
+
+        instance.delete()
+
     def partial_update(self, request, *args, **kwargs):
         user = self.get_object()
-        # Check if a specific field 'is_active' has changed
+
         is_active_before = user.is_active
 
-        response = super().partial_update(request, *args, **kwargs)
+        response = super().partial_update(
+            request,
+            *args,
+            **kwargs
+        )
 
-        user.refresh_from_db()  # Refresh user to get the updated state
-        message_html =  f'''<h2 style="color: #333333;">Account Activation Successfull</h2>
-            <p>Dear <strong>{user.first_name}</strong>,</p>
-            <p>We are pleased to inform you that your account has been successfully activated. You can now access all the features and services available to you.</p>
-            <p>To get started, please log in to your account</p>
-            
-            <p>If you have any questions or need assistance, feel free to reach out to our support team at <a href="mailto:manilajaylord_24@gmail.com">our support Email</a>.</p>
-            <p>We look forward to serving you!</p>
-            <p>
-                <em style="color: #999999;">This is a system-generated email. Please do not reply directly to this message.</em>
-            </p>
-            <p>Best regards,</p>
-            <p>Supply Office<br>
+        user.refresh_from_db()
+
+        message_html = f'''<h2 style="color: #333333;">
+            Account Activation Successfull
+        </h2>
+        <p>Dear <strong>{user.first_name}</strong>,</p>
+        <p>
+            We are pleased to inform you that your account has been
+            successfully activated. You can now access all the features
+            and services available to you.
+        </p>
+        <p>
+            To get started, please log in to your account
+        </p>
+        <p>
+            If you have any questions or need assistance, please reach
+            out to our support team.
+        </p>
+        <p>
+            <em style="color: #999999;">
+                This is a system-generated email.
+                Please do not reply directly to this message.
+            </em>
+        </p>
+        <p>Best regards,</p>
+        <p>
+            Supply Office<br>
             Team SlapSoil<br>
             Team FineWorks<br>
-            </p>'''
+        </p>'''
+
         if not is_active_before and user.is_active:
-            send_mail_resend(user.email, "Account Activation Successfull", message_html)
+            send_mail_resend(
+                user.email,
+                "Account Activation Successfull",
+                message_html
+            )
 
         return response
 
