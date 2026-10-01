@@ -4,7 +4,7 @@ from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from .utils import get_current_user
 from .middleware import get_user_role
-from .models import RecentActivity, TrackStatus, PurchaseRequest
+from .models import RecentActivity, TrackStatus, PurchaseRequest, CustomUser
 import logging
 
 logger = logging.getLogger(__name__)
@@ -92,6 +92,81 @@ for model_name in models_to_track:
         logger.info(f"Connected signals for model: {model_name}")
     except LookupError:
         logger.warning(f"Model {model_name} not found, skipping signal connection")
+
+@receiver(post_save, sender=CustomUser)
+def custom_user_activity(sender, instance, created, **kwargs):
+    user = get_current_user()
+
+    if user is None:
+        logger.warning(
+            "No current user found for CustomUser activity - skipping"
+        )
+        return
+
+    if not getattr(user, "is_authenticated", False):
+        logger.warning(
+            "Current user is not authenticated - skipping CustomUser activity"
+        )
+        return
+
+    activity_type = "Added" if created else "Updated"
+
+    content_type = ContentType.objects.get_for_model(CustomUser)
+
+    try:
+        RecentActivity.objects.create(
+            user=user,
+            user_role=get_user_role(user),
+            activity_type=activity_type,
+            content_type=content_type,
+            object_id=str(instance.pk),
+        )
+
+        logger.info(
+            f"CustomUser activity created: {activity_type} by {user}"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error creating CustomUser activity: {e}"
+        )
+
+
+@receiver(post_delete, sender=CustomUser)
+def custom_user_delete_activity(sender, instance, **kwargs):
+    user = get_current_user()
+
+    if user is None:
+        logger.warning(
+            "No current user found for CustomUser deletion - skipping"
+        )
+        return
+
+    if not getattr(user, "is_authenticated", False):
+        logger.warning(
+            "Current user is not authenticated - skipping CustomUser deletion"
+        )
+        return
+
+    content_type = ContentType.objects.get_for_model(CustomUser)
+
+    try:
+        RecentActivity.objects.create(
+            user=user,
+            user_role=get_user_role(user),
+            activity_type="Deleted",
+            content_type=content_type,
+            object_id=str(instance.pk),
+        )
+
+        logger.info(
+            f"CustomUser deletion activity created by {user}"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error creating CustomUser deletion activity: {e}"
+        )
     
 @receiver(post_save, sender=PurchaseRequest)
 def update_status_on_save(sender, instance, **kwargs):
