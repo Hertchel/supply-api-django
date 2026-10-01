@@ -31,7 +31,15 @@ class CookieJWTAuthentication(JWTAuthentication):
             if not user_id:
                 raise AuthenticationFailed("Invalid token: user_id not found")
             
-            user = self.get_user(validated_token)  # This should work with a validated token
+            user = self.get_user(validated_token)  
+            print(
+                "AUTHENTICATED USER:",
+                user.id,
+                user.first_name,
+                user.last_name,
+                user.email,
+                user.role,
+            )
             
             return (user, validated_token)
         except AuthenticationFailed as e:
