@@ -805,18 +805,19 @@ class RecentActivityList(generics.ListAPIView):
     """
     List recent activities relevant to the current user's role.
     """
+
     serializer_class = RecentActivitySerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     ROLE_ACTIVITY_MODELS = {
-        "Supply Officer": [
+        "supply": [
             "purchaserequest",
             "purchaseorder",
             "item",
         ],
 
-        "BAC Officer": [
+        "bac": [
             "requestforquotation",
             "abstractofquotation",
         ],
@@ -825,33 +826,67 @@ class RecentActivityList(generics.ListAPIView):
             "purchaserequest",
         ],
 
-        "Admin": [
-            "customuser",
+        "admin": [
+            # Add admin-related models here later
         ],
     }
 
     def get_queryset(self):
-        seven_days_ago = now() - timedelta(days=7)
+        current_date = now()
+
+        start_of_month = current_date.replace(
+            day=1,
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+
         user = self.request.user
+
+        # Use the CustomUser role as the application's
+        # normalized role value.
         role = getattr(user, "role", "") or ""
 
-        if hasattr(user, "groups"):
-            group = user.groups.first()
-            if group:
-                role = group.name
+        # Normalize possible role values.
+        role = role.strip().lower()
+
+        # Handle possible group-based role names as fallback.
+        role_aliases = {
+            "supply officer": "supply",
+            "supply": "supply",
+
+            "bac officer": "bac",
+            "bac": "bac",
+
+            "requisitioner": "requisitioner",
+
+            "admin": "admin",
+        }
+
+        role = role_aliases.get(role, role)
 
         allowed_models = self.ROLE_ACTIVITY_MODELS.get(role, [])
+
+        print(
+            "RECENT ACTIVITY FILTER:",
+            "user=", user,
+            "user_role=", getattr(user, "role", None),
+            "normalized_role=", role,
+            "allowed_models=", allowed_models,
+        )
 
         return (
             RecentActivity.objects
             .filter(
-                timestamp__gte=seven_days_ago,
+                timestamp__gte=start_of_month,
                 content_type__model__in=allowed_models,
             )
-            .select_related("user", "content_type")
+            .select_related(
+                "user",
+                "content_type",
+            )
         )
-    
-    
 
 class SendFileView(APIView):
     """
