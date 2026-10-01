@@ -118,7 +118,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'api.request_timing.RequestTimingMiddleware',
     
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
