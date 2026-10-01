@@ -803,16 +803,53 @@ class ChangePasswordView(APIView):
 
 class RecentActivityList(generics.ListAPIView):
     """
-    List recent activities created within the last 7 days.
+    List recent activities relevant to the current user's role.
     """
     serializer_class = RecentActivitySerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    ROLE_ACTIVITY_MODELS = {
+        "Supply Officer": [
+            "purchaserequest",
+            "purchaseorder",
+            "item",
+        ],
+
+        "BAC Officer": [
+            "requestforquotation",
+            "abstractofquotation",
+        ],
+
+        "requisitioner": [
+            "purchaserequest",
+        ],
+
+        "Admin": [
+            "customuser",
+        ],
+    }
+
     def get_queryset(self):
         seven_days_ago = now() - timedelta(days=7)
-        queryset = RecentActivity.objects.filter(timestamp__gte=seven_days_ago).select_related('user', 'content_type')
-        return queryset 
+        user = self.request.user
+        role = getattr(user, "role", "") or ""
+
+        if hasattr(user, "groups"):
+            group = user.groups.first()
+            if group:
+                role = group.name
+
+        allowed_models = self.ROLE_ACTIVITY_MODELS.get(role, [])
+
+        return (
+            RecentActivity.objects
+            .filter(
+                timestamp__gte=seven_days_ago,
+                content_type__model__in=allowed_models,
+            )
+            .select_related("user", "content_type")
+        )
     
     
 
