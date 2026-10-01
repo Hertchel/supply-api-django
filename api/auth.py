@@ -22,6 +22,13 @@ class CookieJWTAuthentication(JWTAuthentication):
 
         try:
             validated_token = self.get_validated_token(token)
+            print(
+                "JWT TOKEN USER:",
+                validated_token.get("user_id"),
+                validated_token.get("email"),
+                validated_token.get("fullname"),
+                validated_token.get("role"),
+            )
            
             if is_token_blacklisted(validated_token):
                 print("Token is blacklisted")

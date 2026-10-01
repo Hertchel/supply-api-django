@@ -314,6 +314,14 @@ class LoginTokenObtainPairView(TokenObtainPairView):
                 secure=True,
                 samesite='None'
             )
+            print(
+                "LOGIN USER:",
+                user.id,
+                user.first_name,
+                user.last_name,
+                user.email,
+                user.role,
+            )
 
             return response
 
