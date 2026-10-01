@@ -110,7 +110,6 @@ def custom_user_activity(sender, instance, created, **kwargs):
         return
 
     activity_type = "Added" if created else "Updated"
-
     content_type = ContentType.objects.get_for_model(CustomUser)
 
     try:
