@@ -93,6 +93,74 @@ for model_name in models_to_track:
     except LookupError:
         logger.warning(f"Model {model_name} not found, skipping signal connection")
 
+print(">>> CUSTOMUSER SIGNALS REGISTERED <<<")
+
+@receiver(post_save, sender=CustomUser)
+def custom_user_activity(sender, instance, created, **kwargs):
+    print(">>> CUSTOMUSER POST_SAVE TRIGGERED <<<")
+    
+    user = get_current_user()
+
+    if user is None:
+        print(">>> NO CURRENT USER <<<")
+        return
+
+    if not getattr(user, "is_authenticated", False):
+        print(">>> CURRENT USER NOT AUTHENTICATED <<<")
+        return
+
+    activity_type = "Added" if created else "Updated"
+    content_type = ContentType.objects.get_for_model(CustomUser)
+
+    try:
+        RecentActivity.objects.create(
+            user=user,
+            user_role=get_user_role(user),
+            activity_type=activity_type,
+            content_type=content_type,
+            object_id=str(instance.pk),
+        )
+
+        print(
+            f">>> CUSTOMUSER ACTIVITY CREATED: {activity_type} BY {user} <<<"
+        )
+
+    except Exception as e:
+        print(f">>> ERROR CREATING CUSTOMUSER ACTIVITY: {e} <<<")
+
+
+@receiver(post_delete, sender=CustomUser)
+def custom_user_delete_activity(sender, instance, **kwargs):
+    print(">>> CUSTOMUSER POST_DELETE TRIGGERED <<<")
+
+    user = get_current_user()
+
+    if user is None:
+        print(">>> NO CURRENT USER FOR DELETE <<<")
+        return
+
+    if not getattr(user, "is_authenticated", False):
+        print(">>> CURRENT USER NOT AUTHENTICATED FOR DELETE <<<")
+        return
+
+    content_type = ContentType.objects.get_for_model(CustomUser)
+
+    try:
+        RecentActivity.objects.create(
+            user=user,
+            user_role=get_user_role(user),
+            activity_type="Deleted",
+            content_type=content_type,
+            object_id=str(instance.pk),
+        )
+
+        print(
+            f">>> CUSTOMUSER DELETE ACTIVITY CREATED BY {user} <<<"
+        )
+
+    except Exception as e:
+        print(f">>> ERROR CREATING CUSTOMUSER DELETE ACTIVITY: {e} <<<")
+
 @receiver(post_save, sender=CustomUser)
 def custom_user_activity(sender, instance, created, **kwargs):
     user = get_current_user()
