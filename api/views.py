@@ -915,13 +915,13 @@ class UserList(generics.ListCreateAPIView):
             )
 
             print(
-                f"ADMIN ACCOUNT ACTIVITY: "
+                f"ACCOUNT ACTIVITY: "
                 f"{self.request.user} Added account {user}"
             )
 
         except Exception as e:
             print(
-                f"ERROR CREATING ADMIN ACCOUNT ACTIVITY: {e}"
+                f"ERROR CREATING ACCOUNT ACTIVITY: {e}"
             )
 class RequisitionerList(generics.ListCreateAPIView):
     """
@@ -1100,13 +1100,13 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
             )
 
             print(
-                f"ADMIN ACCOUNT ACTIVITY: "
+                f"ACCOUNT ACTIVITY: "
                 f"{self.request.user} Updated account {user}"
             )
 
         except Exception as e:
             print(
-                f"ERROR CREATING ADMIN ACCOUNT UPDATE ACTIVITY: {e}"
+                f"ERROR CREATING ACCOUNT UPDATE ACTIVITY: {e}"
             )
 
     def perform_destroy(self, instance):
@@ -1123,13 +1123,13 @@ class UserDetail(generics.RetrieveUpdateDestroyAPIView):
             )
 
             print(
-                f"ADMIN ACCOUNT ACTIVITY: "
+                f"ACCOUNT ACTIVITY: "
                 f"{self.request.user} Deleted account {user_name}"
             )
 
         except Exception as e:
             print(
-                f"ERROR CREATING ADMIN ACCOUNT DELETE ACTIVITY: {e}"
+                f"ERROR CREATING ACCOUNT DELETE ACTIVITY: {e}"
             )
 
         instance.delete()
@@ -1794,38 +1794,8 @@ class InspectionAndAcceptanceList(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-
-        inspection = serializer.save()
-
-        purchase_request = inspection.purchase_request
-
-        supplier_items = SupplierItem.objects.filter(
-            supplier=inspection.purchase_order.supplier,
-            item_quotation__is_low_price=True
-        )
-
-        for supplier_item in supplier_items:
-
-            existing_delivery = DeliveredItems.objects.filter(
-                inspection=inspection,
-                supplier_item=supplier_item
-            ).exists()
-
-            if not existing_delivery:
-
-                delivery_count = DeliveredItems.objects.count() + 1
-
-                DeliveredItems.objects.create(
-                    delivery_id=f"DEL-{timezone.now().year}-{delivery_count:04d}",
-                    purchase_request=purchase_request,
-                    inspection=inspection,
-                    supplier_item=supplier_item,
-                    quantity_delivered=supplier_item.item_quantity,
-                    is_complete=True,
-                    is_partial=False
-                )
-
-
+        serializer.save()
+                                                                                                        
 class InspectionAndAcceptanceDetail(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, Update or Delete a Inspection and Acceptance instance
