@@ -270,52 +270,60 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             serializer.is_valid(raise_exception=True)
             user = serializer.user
 
-            # Generate JWT tokens immediately after successful login
+            # Generate JWT tokens
             refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
+            refresh_token = str(refresh)
 
             # Update last login
             user.last_login = timezone.now()
             user.save()
 
-            # Add custom claims to the refresh token
+            # Add custom claims
             role = user.groups.first()
 
-            refresh['role'] = role.name if role else None
-            refresh['email'] = user.email
-            refresh['fullname'] = f'{user.first_name} {user.last_name}'
+            refresh["role"] = role.name if role else None
+            refresh["email"] = user.email
+            refresh["fullname"] = f"{user.first_name} {user.last_name}"
 
-            # User information returned to frontend
+            # User information
             user_data = {
-                'id': user.id,
-                'email': user.email,
-                'role': role.name if role else None,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                "id": user.id,
+                "email": user.email,
+                "role": role.name if role else None,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
             }
 
-            # Create response
-            response = Response({
-                'message': 'Login Successfully',
-                'user': user_data,
-            }, status=status.HTTP_200_OK)
+            response = Response(
+                {
+                    "message": "Login Successfully",
+                    "user": user_data,
 
-            # Set refresh token cookie
-            response.set_cookie(
-                key='refresh_token',
-                value=str(refresh),
-                httponly=True,
-                secure=True,
-                samesite='None'
+                    # NEW:
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                },
+                status=status.HTTP_200_OK,
             )
 
-            # Set access token cookie
+            # Keep cookies temporarily as fallback
             response.set_cookie(
-                key='access_token',
-                value=str(refresh.access_token),
+                key="refresh_token",
+                value=refresh_token,
                 httponly=True,
                 secure=True,
-                samesite='None'
+                samesite="None",
             )
+
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=True,
+                samesite="None",
+            )
+
             print(
                 "LOGIN USER:",
                 user.id,
@@ -329,8 +337,8 @@ class LoginTokenObtainPairView(TokenObtainPairView):
 
         except Exception as e:
             return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         
 class CheckAuthView(APIView):
@@ -355,6 +363,7 @@ class OTPVerificationView(APIView):
     """
     OTP Verification View
     """
+
     permission_classes = []
     authentication_classes = []
     serializer_class = OTPVerificationSerializer
@@ -363,62 +372,91 @@ class OTPVerificationView(APIView):
         serializer = OTPVerificationSerializer(data=request.data)
 
         if serializer.is_valid():
-            email = serializer.validated_data['email']
-            otp_code = serializer.validated_data['otp_code']
+            email = serializer.validated_data["email"]
+            otp_code = serializer.validated_data["otp_code"]
 
             try:
                 user = CustomUser.objects.get(email=email)
 
                 if user.verify_otp(otp_code):
+
                     refresh = RefreshToken.for_user(user)
+
+                    # Add custom claims BEFORE generating access token
+                    role = user.groups.first()
+
+                    refresh["role"] = role.name if role else None
+                    refresh["email"] = user.email
+                    refresh["fullname"] = (
+                        f"{user.first_name} {user.last_name}"
+                    )
+
+                    refresh_token = str(refresh)
+                    access_token = str(refresh.access_token)
+
+                    # Update last login
                     user.last_login = timezone.now()
                     user.save()
 
-                    # Add custom claims to the token (email and role)
-                    role = user.groups.first()
-                    refresh['role'] = role.name if role else None
-                    refresh['email'] = user.email
-                    refresh['fullname'] = f'{user.first_name} {user.last_name}'
-                    
-                    user = {
-                        'id': user.id,
-                        'email': user.email,
-                        'role': role.name if role else None,
-                        'first_name': user.first_name,
-                        'last_name': user.last_name
+                    user_data = {
+                        "id": user.id,
+                        "email": user.email,
+                        "role": role.name if role else None,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
                     }
-                    
-                    # Create the response object
-                    response = Response({
-                        'message': 'Login Successfully',
-                        'user': user,
-                    }, status=status.HTTP_200_OK)
-                    
-                    # Set tokens as HTTP-only cookies
+
+                    response = Response(
+                        {
+                            "message": "Login Successfully",
+                            "user": user_data,
+
+                            # NEW
+                            "access_token": access_token,
+                            "refresh_token": refresh_token,
+                        },
+                        status=status.HTTP_200_OK,
+                    )
+
+                    # Keep cookies temporarily as fallback
                     response.set_cookie(
-                        key='refresh_token',
-                        value=str(refresh),
+                        key="refresh_token",
+                        value=refresh_token,
                         httponly=True,
                         secure=True,
-                        samesite='None'
+                        samesite="None",
                     )
+
                     response.set_cookie(
-                        key='access_token',
-                        value=str(refresh.access_token),
+                        key="access_token",
+                        value=access_token,
                         httponly=True,
-                        secure=True, 
-                        samesite='None'
+                        secure=True,
+                        samesite="None",
                     )
 
                     return response
 
                 else:
-                    return Response({'error': 'Invalid or Expired OTP'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {
+                            "error": "Invalid or Expired OTP"
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
             except CustomUser.DoesNotExist:
-                return Response({'error': 'User Does not Exist'}, status=status.Http_404_NOT_FOUND)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
+                return Response(
+                    {
+                        "error": "User Does not Exist"
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        return Response(
+            serializer.errors,
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 class ResendOTPView(APIView):
     """
@@ -693,33 +731,55 @@ class ResetPasswordView(APIView):
 class RefreshTokenView(APIView):
     permission_classes = []
     authentication_classes = []
-    
+
     def post(self, request):
-        refresh_token = request.COOKIES.get('refresh_token')
+        refresh_token = request.data.get("refresh_token")
         if not refresh_token:
-            return Response({'error': 'No refresh token provided'}, status=400)
+            refresh_token = request.COOKIES.get("refresh_token")
+
+        if not refresh_token:
+            return Response(
+                {"error": "No refresh token provided"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             refresh = RefreshToken(refresh_token)
+
+            # Generate new access token
             access_token = str(refresh.access_token)
 
-            response = Response({'message': 'Token refreshed', 'access_token': access_token})
+            response = Response(
+                {
+                    "message": "Token refreshed",
+                    "access_token": access_token,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+            # Keep cookie fallback temporarily
             response.set_cookie(
-                key='access_token',
+                key="access_token",
                 value=access_token,
                 httponly=True,
-                secure=is_production,  # Ensure `is_production` is defined correctly
-                samesite='None',
-                max_age=3600,  # Token lifespan in seconds
+                secure=is_production,
+                samesite="None",
+                max_age=3600,
             )
+
             return response
 
         except InvalidToken:
-            return Response({'error': 'Invalid or expired refresh token'}, status=401)
+            return Response(
+                {"error": "Invalid or expired refresh token"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         except Exception as e:
-            return Response({'error': f'Unexpected error: {str(e)}'}, status=500)
-
+            return Response(
+                {"error": f"Unexpected error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 class LoginTokenOfflineView(TokenObtainPairView):
     """
@@ -762,31 +822,43 @@ class LogoutView(APIView):
     """
     Logout view
     """
+
     permission_classes = [IsAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
 
     def post(self, request, *args, **kwargs):
         try:
-            # Retrieve the refresh token from cookies or request data
-            refresh_token = request.COOKIES.get('refresh_token') or request.data.get('refresh_token')
+            refresh_token = request.data.get("refresh_token")
+            if not refresh_token:
+                refresh_token = request.COOKIES.get("refresh_token")
 
             if not refresh_token:
-                return Response({"detail": "Refresh token is required"}, status=400)
-
-            # Blacklist the refresh token
+                return Response(
+                    {"detail": "Refresh token is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             token = RefreshToken(refresh_token)
             token.blacklist()
-            print("Token Blacklisted and cant be used in future authentication")
 
-            # Optionally delete tokens from cookies
-            response = Response({"message": "Logout successful"})
-            response.delete_cookie('access_token')
-            response.delete_cookie('refresh_token')
-            return response
-        except TokenError as e:
-            return Response({"detail": "Invalid token"}, status=400)
+            print(
+                "Refresh token blacklisted successfully"
+            )
+            return Response(
+                {"message": "Logout successful"},
+                status=status.HTTP_200_OK,
+            )
+
+        except TokenError:
+            return Response(
+                {"detail": "Invalid token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         except Exception as e:
-            return Response({"detail": f"Error during logout: {str(e)}"}, status=500)
+            return Response(
+                {"detail": f"Error during logout: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
         
 class ChangePasswordView(APIView):
     """
