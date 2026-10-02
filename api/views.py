@@ -996,6 +996,12 @@ class AuthenticatedRequisitionerDashboardView(APIView):
 
     def get(self, request):
 
+        return Response({
+            "user_id": request.user.id,
+            "email": request.user.email,
+            "is_authenticated": request.user.is_authenticated,
+        })
+
         try:
 
             requisitioner = Requesitioner.objects.get(
