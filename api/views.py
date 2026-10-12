@@ -1728,22 +1728,39 @@ class PurchaseOrderList(generics.ListCreateAPIView):
     """
     List all Purchase Order, or create a new Purchase Order
     """
+    
     queryset = PurchaseOrder.objects.select_related(
-            "purchase_request",
-            "purchase_request__requisitioner",
-            "purchase_request__campus_director",
-            "purchase_request__office",
-            "purchase_request__reviewed_by",
-            "request_for_quotation",
-            "request_for_quotation__purchase_request",
-            "abstract_of_quotation",
-            "abstract_of_quotation__purchase_request",
-            "supplier",
-            "supplier__aoq",
-            "supplier__aoq__purchase_request",
-            "supplier__rfq",
-            "supplier__rfq__purchase_request",
-        ).order_by("-created_at")
+        # Direct purchase-request details
+        "purchase_request",
+        "purchase_request__requisitioner",
+        "purchase_request__campus_director",
+        "purchase_request__office",
+        "purchase_request__reviewed_by",
+
+        # RFQ
+        "request_for_quotation",
+        "request_for_quotation__purchase_request",
+
+        # Abstract of Quotation and its nested purchase request
+        "abstract_of_quotation",
+        "abstract_of_quotation__purchase_request",
+        "abstract_of_quotation__purchase_request__requisitioner",
+        "abstract_of_quotation__purchase_request__campus_director",
+        "abstract_of_quotation__purchase_request__office",
+        "abstract_of_quotation__purchase_request__reviewed_by",
+
+        # Supplier and its quotation relationships
+        "supplier",
+        "supplier__aoq",
+        "supplier__aoq__purchase_request",
+        "supplier__aoq__purchase_request__requisitioner",
+        "supplier__aoq__purchase_request__campus_director",
+        "supplier__aoq__purchase_request__office",
+        "supplier__aoq__purchase_request__reviewed_by",
+        "supplier__rfq",
+        "supplier__rfq__purchase_request",
+    ).order_by("-created_at")
+
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
