@@ -51,6 +51,8 @@ from .serializers import *
 from .tokens import get_tokens_for_user, token_decoder
 from django.contrib.contenttypes.models import ContentType
 from .middleware import get_user_role
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 from dotenv import load_dotenv
 import os
 
@@ -67,6 +69,14 @@ def generate_ics_number():
         sequence.last_number += 1
         sequence.save(update_fields=["last_number"])
         return f"ICS-{current_year}-{sequence.last_number:04d}"
+
+@require_GET
+def health_check(request):
+    response = JsonResponse({
+        "status": "ok"
+    })
+    response["Cache-Control"] = "no-store"
+    return response
 
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])

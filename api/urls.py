@@ -2,12 +2,13 @@ from django.urls import path
 
 from .views import *
 from django.urls import re_path
-
 from django.urls import path, include
+from .views import health_check
 
 urlpatterns = [
     path('requisitioner/', RequisitionerList.as_view()),
     path('requisitioner/<str:pk>', RequisitionerDetail.as_view()),
+    path('health/', health_check, name='health-check'),
 
     path('users/', UserList.as_view()),
     path('user/<str:pk>', UserDetail.as_view()),
