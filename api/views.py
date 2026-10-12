@@ -1726,7 +1726,22 @@ class PurchaseOrderList(generics.ListCreateAPIView):
     """
     List all Purchase Order, or create a new Purchase Order
     """
-    queryset = PurchaseOrder.objects.all().order_by('-created_at')
+    queryset = PurchaseOrder.objects.select_related(
+        "purchase_request",
+        "purchase_request__requisitioner",
+        "purchase_request__campus_director",
+        "purchase_request__office",
+        "purchase_request__reviewed_by",
+        "request_for_quotation",
+        "request_for_quotation__purchase_request",
+        "abstract_of_quotation",
+        "abstract_of_quotation__purchase_request",
+        "supplier",
+        "supplier__aoq",
+        "supplier__aoq__purchase_request",
+        "supplier__rfq",
+        "supplier__rfq__purchase_request",
+    ).order_by("-created_at")
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
