@@ -52,7 +52,7 @@ from .tokens import get_tokens_for_user, token_decoder
 from django.contrib.contenttypes.models import ContentType
 from .middleware import get_user_role
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_safe
 from dotenv import load_dotenv
 import os
 
@@ -70,7 +70,7 @@ def generate_ics_number():
         sequence.save(update_fields=["last_number"])
         return f"ICS-{current_year}-{sequence.last_number:04d}"
 
-@require_GET
+@require_safe
 def health_check(request):
     response = JsonResponse({
         "status": "ok"
