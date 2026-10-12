@@ -409,45 +409,85 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
 
         return None
 
+    
     def get_items(self, obj):
-
-        items = Item.objects.filter(
-            purchase_request=obj
+        cache = self.context.setdefault(
+            "_purchase_request_items_cache", {}
         )
+        key = obj.pk
 
-        return RequisitionerItemSerializer(
-            items,
-            many=True
-        ).data
+        if key not in cache:
+            items = Item.objects.filter(
+                purchase_request_id=obj.pk
+            ).only(
+                "item_no",
+                "item_description",
+                "quantity",
+                "unit",
+                "unit_cost",
+                "total_cost",
+            )
+
+            cache[key] = list(
+                RequisitionerItemSerializer(
+                    items,
+                    many=True
+                ).data
+            )
+
+        return cache[key]
 
     def get_supplier_name(self, obj):
+        cache = self.context.setdefault(
+            "_purchase_request_supplier_name_cache", {}
+        )
+        key = obj.pk
 
-        supplier_item = SupplierItem.objects.filter(
-            rfq__purchase_request=obj
-        ).first()
+        if key not in cache:
+            supplier_item = (
+                SupplierItem.objects
+                .filter(rfq__purchase_request_id=obj.pk)
+                .select_related("supplier")
+                .first()
+            )
 
-        if supplier_item and supplier_item.supplier:
-            return supplier_item.supplier.name
+            cache[key] = (
+                supplier_item.supplier.name
+                if supplier_item and supplier_item.supplier
+                else None
+            )
 
-        return None
+        return cache[key]
 
     def get_winning_bidder(self, obj):
+        cache = self.context.setdefault(
+            "_purchase_request_winning_bidder_cache", {}
+        )
+        key = obj.pk
 
-        aoq = AbstractOfQuotation.objects.filter(
-            purchase_request=obj
-        ).first()
+        if key not in cache:
+            aoq = AbstractOfQuotation.objects.filter(
+                purchase_request_id=obj.pk
+            ).first()
 
-        if not aoq:
-            return None
+            supplier_item = None
 
-        supplier_item = SupplierItem.objects.filter(
-            supplier__aoq=aoq
-        ).first()
+            if aoq:
+                supplier_item = (
+                    SupplierItem.objects
+                    .filter(supplier__aoq=aoq)
+                    .select_related("supplier")
+                    .first()
+                )
 
-        if supplier_item and supplier_item.supplier:
-            return supplier_item.supplier.name
+            cache[key] = (
+                supplier_item.supplier.name
+                if supplier_item and supplier_item.supplier
+                else None
+            )
 
-        return None
+        return cache[key]
+
 
 class BulkItemImportSerializer(serializers.Serializer):
     purchase_request = serializers.CharField()
@@ -665,12 +705,9 @@ class ItemQuotationSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
-
-
 class AbstractOfQuotationSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)
     pr_details = PurchaseRequestSerializer(source='purchase_request', read_only=True)
-
     class Meta:
         model = AbstractOfQuotation
         fields = '__all__'
@@ -678,14 +715,10 @@ class AbstractOfQuotationSerializer(serializers.ModelSerializer):
             'purchase_request': {'write_only': True},
             'pr_details': {'read_only': True},
         }
-
-
 class BACMemberSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = BACMember
         fields = '__all__' 
-
 class SupplierProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = SupplierProfile
@@ -756,7 +789,6 @@ class SupplierProfileSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
-
 class SupplierSerializer(serializers.ModelSerializer):
     aoq = serializers.PrimaryKeyRelatedField(queryset=AbstractOfQuotation.objects.all(), write_only=True, required=False, allow_null=True)
     aoq_details = AbstractOfQuotationSerializer(source='aoq', read_only=True)
