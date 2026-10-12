@@ -40,9 +40,7 @@ from .filters import *
 from .models import *
 from .resend import send_mail_resend, send_file
 from django.db import transaction
-from time import perf_counter
-from django.db import connection
-from django.test.utils import CaptureQueriesContext
+from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
@@ -1728,74 +1726,10 @@ class PurchaseOrderList(generics.ListCreateAPIView):
     """
     List all Purchase Order, or create a new Purchase Order
     """
-    
-    queryset = PurchaseOrder.objects.select_related(
-        # Direct purchase-request details
-        "purchase_request",
-        "purchase_request__requisitioner",
-        "purchase_request__campus_director",
-        "purchase_request__office",
-        "purchase_request__reviewed_by",
-
-        # RFQ
-        "request_for_quotation",
-        "request_for_quotation__purchase_request",
-
-        # Abstract of Quotation and its nested purchase request
-        "abstract_of_quotation",
-        "abstract_of_quotation__purchase_request",
-        "abstract_of_quotation__purchase_request__requisitioner",
-        "abstract_of_quotation__purchase_request__campus_director",
-        "abstract_of_quotation__purchase_request__office",
-        "abstract_of_quotation__purchase_request__reviewed_by",
-
-        # Supplier and its quotation relationships
-        "supplier",
-        "supplier__aoq",
-        "supplier__aoq__purchase_request",
-        "supplier__aoq__purchase_request__requisitioner",
-        "supplier__aoq__purchase_request__campus_director",
-        "supplier__aoq__purchase_request__office",
-        "supplier__aoq__purchase_request__reviewed_by",
-        "supplier__rfq",
-        "supplier__rfq__purchase_request",
-    ).order_by("-created_at")
-
+    queryset = PurchaseOrder.objects.all().order_by('-created_at')
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
-    def list(self, request, *args, **kwargs):
-        started = perf_counter()
-
-        queryset = self.filter_queryset(self.get_queryset())
-
-        with CaptureQueriesContext(connection) as captured:
-            page = self.paginate_queryset(queryset)
-
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
-                response = self.get_paginated_response(serializer.data)
-            else:
-                serializer = self.get_serializer(queryset, many=True)
-                response = Response(serializer.data)
-
-        total_seconds = perf_counter() - started
-
-        database_seconds = sum(
-            float(query.get("time") or 0)
-            for query in captured.captured_queries
-        )
-
-        print(
-            "[PURCHASE ORDER PERFORMANCE] "
-            f"total={total_seconds:.2f}s | "
-            f"queries={len(captured.captured_queries)} | "
-            f"database_time={database_seconds:.2f}s | "
-            f"other_time={max(total_seconds - database_seconds, 0):.2f}s"
-        )
-
-        return response
 
 
 class PurchaseOrderDetail(generics.RetrieveUpdateDestroyAPIView):
