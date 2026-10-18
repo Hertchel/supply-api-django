@@ -705,6 +705,47 @@ class ItemQuotationSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
+
+
+class AOQSupplierSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Supplier
+        fields = [
+            "supplier_no",
+            "name",
+            "address",
+            "tin",
+        ]
+
+
+class AOQQuotedItemSerializer(serializers.ModelSerializer):
+    supplier_details = AOQSupplierSummarySerializer(
+        source="supplier",
+        read_only=True,
+    )
+
+    item_quotation_details = ItemQuotationSerializer(
+        source="item_quotation",
+        read_only=True,
+    )
+
+    rfq_no = serializers.CharField(
+        source="rfq.rfq_no",
+        read_only=True,
+    )
+
+    class Meta:
+        model = SupplierItem
+        fields = [
+            "supplier_item_no",
+            "rfq_no",
+            "supplier_details",
+            "item_quotation_details",
+            "item_quantity",
+            "item_cost",
+            "total_amount",
+        ]
+
 class AbstractOfQuotationSerializer(serializers.ModelSerializer):
     purchase_request = serializers.PrimaryKeyRelatedField(queryset=PurchaseRequest.objects.all(), write_only=True)
     pr_details = PurchaseRequestSerializer(source='purchase_request', read_only=True)
@@ -715,6 +756,35 @@ class AbstractOfQuotationSerializer(serializers.ModelSerializer):
             'purchase_request': {'write_only': True},
             'pr_details': {'read_only': True},
         }
+    
+    supplier_quotes = serializers.SerializerMethodField()
+
+    def get_supplier_quotes(self, obj):
+        quotes = (
+            SupplierItem.objects
+            .filter(
+                rfq__purchase_request_id=obj.purchase_request_id
+            )
+            .select_related(
+                "supplier",
+                "rfq",
+                "item_quotation",
+                "item_quotation__item",
+                "item_quotation__item__purchase_request",
+                "item_quotation__item__purchase_request__requisitioner",
+                "item_quotation__item__purchase_request__campus_director",
+                "item_quotation__item__purchase_request__office",
+                "item_quotation__item__purchase_request__reviewed_by",
+            )
+            .order_by("supplier__name")
+        )
+
+        return AOQQuotedItemSerializer(
+            quotes,
+            many=True,
+            context=self.context,
+        ).data
+
 class BACMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = BACMember
