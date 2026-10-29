@@ -1007,9 +1007,14 @@ class InventoryDeliveredItemsSerializer(serializers.ModelSerializer):
         read_only=True,
     )
 
-    quantity = serializers.IntegerField(
-        source="quantity_delivered",
-        read_only=True,
+    # Original quantity ordered
+    quantity = serializers.ReadOnlyField(
+        source="supplier_item.item_quantity",
+    )
+
+    # Quoted unit price
+    unit_cost = serializers.ReadOnlyField(
+        source="supplier_item.item_quotation.unit_price",
     )
 
     class Meta:
@@ -1020,6 +1025,8 @@ class InventoryDeliveredItemsSerializer(serializers.ModelSerializer):
             "item_description",
             "unit",
             "quantity",
+            "unit_cost",
+            "quantity_delivered",
         ]
 class ICSItemSerializer(serializers.ModelSerializer):
     delivered_item = serializers.PrimaryKeyRelatedField(
