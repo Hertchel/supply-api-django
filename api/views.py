@@ -1722,11 +1722,48 @@ class SupplierItemDetail(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
 
+
 class PurchaseOrderList(generics.ListCreateAPIView):
     """
-    List all Purchase Order, or create a new Purchase Order
+    List all Purchase Orders or create a new Purchase Order.
+    Related records are preloaded to reduce database queries.
     """
-    queryset = PurchaseOrder.objects.all().order_by('-created_at')
+    queryset = (
+        PurchaseOrder.objects.select_related(
+            # Direct Purchase Order relationships
+            "purchase_request",
+            "request_for_quotation",
+            "abstract_of_quotation",
+            "supplier",
+
+            # Purchase Request details
+            "purchase_request__requisitioner",
+            "purchase_request__campus_director",
+            "purchase_request__office",
+            "purchase_request__reviewed_by",
+
+            # Abstract of Quotation and its Purchase Request
+            "abstract_of_quotation__purchase_request",
+            "abstract_of_quotation__purchase_request__requisitioner",
+            "abstract_of_quotation__purchase_request__campus_director",
+            "abstract_of_quotation__purchase_request__office",
+            "abstract_of_quotation__purchase_request__reviewed_by",
+
+            # Supplier details
+            "supplier__supplier_profile",
+            "supplier__rfq",
+            "supplier__aoq",
+
+            # Supplier's Abstract of Quotation and Purchase Request
+            "supplier__aoq__purchase_request",
+            "supplier__aoq__purchase_request__requisitioner",
+            "supplier__aoq__purchase_request__campus_director",
+            "supplier__aoq__purchase_request__office",
+            "supplier__aoq__purchase_request__reviewed_by",
+        )
+        .order_by("-created_at")
+    )
+
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
