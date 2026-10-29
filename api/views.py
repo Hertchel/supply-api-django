@@ -1654,14 +1654,32 @@ class SupplierProfileDetail(generics.RetrieveUpdateDestroyAPIView):
     lookup_field = 'supplier_profile_id'
 
 
+
 class SupplierList(generics.ListCreateAPIView):
     """
-    List all Supplier, or create a new Supplier
+    List all Suppliers or create a new Supplier.
+    Preload related records to reduce database queries.
     """
-    queryset = Supplier.objects.all().order_by('-created_at')
+    queryset = (
+        Supplier.objects.select_related(
+            "supplier_profile",
+            "rfq",
+            "aoq",
+
+            # Purchase Request nested inside Abstract of Quotation
+            "aoq__purchase_request",
+            "aoq__purchase_request__requisitioner",
+            "aoq__purchase_request__campus_director",
+            "aoq__purchase_request__office",
+            "aoq__purchase_request__reviewed_by",
+        )
+        .order_by("-created_at")
+    )
+
     serializer_class = SupplierSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
 
 
 class SupplierDetail(generics.RetrieveUpdateDestroyAPIView):
