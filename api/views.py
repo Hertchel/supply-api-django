@@ -1890,13 +1890,35 @@ class InspectionAndAcceptanceDetail(generics.RetrieveUpdateDestroyAPIView):
 
 class DeliveredItemsList(generics.ListCreateAPIView):
     """
-    List all  Delivered Items , or create a new Delivered Items
+    List all Delivered Items, or create new Delivered Items.
     """
-    queryset = DeliveredItems.objects.all()
+    queryset = DeliveredItems.objects.select_related(
+        "purchase_request",
+        "purchase_request__requisitioner",
+        "purchase_request__campus_director",
+        "purchase_request__office",
+        "purchase_request__reviewed_by",
+
+        "inspection",
+        "inspection__purchase_request",
+        "inspection__purchase_order",
+        "inspection__purchase_order__purchase_request",
+        "inspection__purchase_order__request_for_quotation",
+        "inspection__purchase_order__abstract_of_quotation",
+        "inspection__purchase_order__supplier",
+
+        "supplier_item",
+        "supplier_item__supplier",
+        "supplier_item__supplier__aoq",
+        "supplier_item__supplier__rfq",
+        "supplier_item__rfq",
+        "supplier_item__item_quotation",
+        "supplier_item__item_quotation__item",
+    )
+
     serializer_class = DeliveredItemsSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
 
 class DeliveredItemsDetail(generics.RetrieveUpdateDestroyAPIView):
     """
