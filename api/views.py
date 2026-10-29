@@ -1424,7 +1424,7 @@ class PurchaseRequestList(generics.ListCreateAPIView):
     """
     List all Purchase request, or create a new Purchase request
     """
-    queryset = PurchaseRequest.objects.select_related("requisitioner", "campus_director").order_by('-created_at')
+    queryset = PurchaseRequest.objects.select_related("requisitioner", "campus_director", "office", "reviewed_by").order_by('-created_at')
     serializer_class = PurchaseRequestSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
