@@ -3,7 +3,7 @@ from django.urls import path
 from .views import *
 from django.urls import re_path
 from django.urls import path, include
-from .views import health_check
+from .views import health_check 
 
 urlpatterns = [
     path('requisitioner/', RequisitionerList.as_view()),
@@ -60,6 +60,7 @@ urlpatterns = [
     path('purchase-order-item/<str:pk>', PurchaseOrderItemDetail.as_view()),
 
     path('items-delivered/', DeliveredItemsList.as_view()),
+    path("items-delivered/inventory/", InventoryDeliveredItemsList.as_view(), name="inventory-delivered-items",),
     path('items-delivered/<str:pk>', DeliveredItemsDetail.as_view()),
     path('items-delivered/<str:pk>/update', DeliveredItemsUpdateView.as_view()),
     path('items-delivered/purchase-request/filter/', DeliveredItemsFilterListView.as_view()),

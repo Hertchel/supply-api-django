@@ -1942,7 +1942,21 @@ class DeliveredItemsFilterListView(ListAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+class InventoryDeliveredItemsList(generics.ListAPIView):
+    """
+    Lightweight delivered-items endpoint for the Inventory page.
+    Returns only the fields required by the inventory table.
+    """
 
+    queryset = DeliveredItems.objects.select_related(
+        "inspection__purchase_order",
+        "supplier_item__item_quotation__item",
+    ).all()
+
+    serializer_class = InventoryDeliveredItemsSerializer
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
 
 class StockItemsList(generics.ListCreateAPIView):
     """

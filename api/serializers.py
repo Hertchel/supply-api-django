@@ -991,6 +991,36 @@ class DeliveredItemsSerializer(serializers.ModelSerializer):
             'item_details': {'read_only': True}
         }
 
+class InventoryDeliveredItemsSerializer(serializers.ModelSerializer):
+    po_no = serializers.CharField(
+        source="inspection.purchase_order.po_no",
+        read_only=True,
+    )
+
+    item_description = serializers.CharField(
+        source="supplier_item.item_quotation.item.item_description",
+        read_only=True,
+    )
+
+    unit = serializers.CharField(
+        source="supplier_item.item_quotation.item.unit",
+        read_only=True,
+    )
+
+    quantity = serializers.IntegerField(
+        source="quantity_delivered",
+        read_only=True,
+    )
+
+    class Meta:
+        model = DeliveredItems
+        fields = [
+            "delivery_id",
+            "po_no",
+            "item_description",
+            "unit",
+            "quantity",
+        ]
 class ICSItemSerializer(serializers.ModelSerializer):
     delivered_item = serializers.PrimaryKeyRelatedField(
         queryset=DeliveredItems.objects.all(),
