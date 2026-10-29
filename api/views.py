@@ -1712,10 +1712,15 @@ class SupplierItemList(generics.ListCreateAPIView):
     """
     List all SupplierItem, or create a new SupplierItem
     """
+    
     queryset = SupplierItem.objects.select_related(
         "supplier",
         "supplier__aoq",
         "supplier__aoq__purchase_request",
+        "supplier__aoq__purchase_request__requisitioner",
+        "supplier__aoq__purchase_request__campus_director",
+        "supplier__aoq__purchase_request__office",
+        "supplier__aoq__purchase_request__reviewed_by",
         "supplier__rfq",
         "supplier__rfq__purchase_request",
         "rfq",
@@ -1723,7 +1728,12 @@ class SupplierItemList(generics.ListCreateAPIView):
         "item_quotation",
         "item_quotation__item",
         "item_quotation__item__purchase_request",
+        "item_quotation__item__purchase_request__requisitioner",
+        "item_quotation__item__purchase_request__campus_director",
+        "item_quotation__item__purchase_request__office",
+        "item_quotation__item__purchase_request__reviewed_by",
     )
+
 
     serializer_class = SupplierItemSerializer
     authentication_classes = [CookieJWTAuthentication]
