@@ -991,6 +991,25 @@ class DeliveredItemsSerializer(serializers.ModelSerializer):
             'item_details': {'read_only': True}
         }
 
+class DeliveredItemsSummarySerializer(serializers.ModelSerializer):
+    po_no = serializers.CharField(
+        source="inspection.purchase_order.po_no",
+        read_only=True,
+    )
+
+    supplier_item_no = serializers.CharField(
+        source="supplier_item.supplier_item_no",
+        read_only=True,
+    )
+
+    class Meta:
+        model = DeliveredItems
+        fields = [
+            "delivery_id",
+            "po_no",
+            "supplier_item_no",
+            "quantity_delivered",
+        ]
 class InventoryDeliveredItemsSerializer(serializers.ModelSerializer):
     po_no = serializers.CharField(
         source="inspection.purchase_order.po_no",

@@ -1959,36 +1959,19 @@ class InspectionAndAcceptanceDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 class DeliveredItemsList(generics.ListCreateAPIView):
-    """
-    List all Delivered Items, or create new Delivered Items.
-    """
     queryset = DeliveredItems.objects.select_related(
-        "purchase_request",
-        "purchase_request__requisitioner",
-        "purchase_request__campus_director",
-        "purchase_request__office",
-        "purchase_request__reviewed_by",
-
-        "inspection",
-        "inspection__purchase_request",
         "inspection__purchase_order",
-        "inspection__purchase_order__purchase_request",
-        "inspection__purchase_order__request_for_quotation",
-        "inspection__purchase_order__abstract_of_quotation",
-        "inspection__purchase_order__supplier",
-
         "supplier_item",
-        "supplier_item__supplier",
-        "supplier_item__supplier__aoq",
-        "supplier_item__supplier__rfq",
-        "supplier_item__rfq",
-        "supplier_item__item_quotation",
-        "supplier_item__item_quotation__item",
     )
 
-    serializer_class = DeliveredItemsSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == "GET":
+            return DeliveredItemsSummarySerializer
+
+        return DeliveredItemsSerializer
 
 class DeliveredItemsDetail(generics.RetrieveUpdateDestroyAPIView):
     """
@@ -2001,12 +1984,12 @@ class DeliveredItemsDetail(generics.RetrieveUpdateDestroyAPIView):
     
     
 class DeliveredItemsFilterListView(ListAPIView):
-    """
-    Views for filtering Items delivered by Purchase Request
-    """
+    queryset = DeliveredItems.objects.select_related(
+        "inspection__purchase_order",
+        "supplier_item",
+    )
 
-    queryset = DeliveredItems.objects.all()
-    serializer_class = DeliveredItemsSerializer
+    serializer_class = DeliveredItemsSummarySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = DeliveredItemsFilter
     authentication_classes = [CookieJWTAuthentication]
