@@ -1985,16 +1985,33 @@ class DeliveredItemsDetail(generics.RetrieveUpdateDestroyAPIView):
     
 class DeliveredItemsFilterListView(ListAPIView):
     queryset = DeliveredItems.objects.select_related(
+        "purchase_request",
+        "purchase_request__requisitioner",
+        "purchase_request__campus_director",
+        "purchase_request__office",
+        "purchase_request__reviewed_by",
+        "inspection",
+        "inspection__purchase_request",
         "inspection__purchase_order",
+        "inspection__purchase_order__purchase_request",
+        "inspection__purchase_order__request_for_quotation",
+        "inspection__purchase_order__abstract_of_quotation",
+        "inspection__purchase_order__supplier",
         "supplier_item",
+        "supplier_item__supplier",
+        "supplier_item__supplier__aoq",
+        "supplier_item__supplier__rfq",
+        "supplier_item__rfq",
+        "supplier_item__item_quotation",
+        "supplier_item__item_quotation__item",
     )
 
-    serializer_class = DeliveredItemsSummarySerializer
+    serializer_class = DeliveredItemsSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = DeliveredItemsFilter
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
 class InventoryDeliveredItemsList(generics.ListAPIView):
     """
     Lightweight delivered-items endpoint for the Inventory page.
