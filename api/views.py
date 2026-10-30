@@ -351,22 +351,27 @@ class LoginTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         
+
 class CheckAuthView(APIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
 
     def get(self, request, *args, **kwargs):
-        try:
-            user = request.user
-            return Response({
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "role": user.groups.first().name if user.groups.exists() else "User",
-            })
-        except Exception as e:
-            raise AuthenticationFailed("Invalid token or user not authenticated")
+        user = request.user
+
+        role = user.groups.values_list(
+            "name",
+            flat=True
+        ).first() or "User"
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": role,
+        })
+
 
 
 class OTPVerificationView(APIView):
