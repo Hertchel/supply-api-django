@@ -1079,6 +1079,14 @@ class RequisitionerInventorySerializer(serializers.ModelSerializer):
         source="delivered_item.supplier_item.item_quotation.item.unit",
         read_only=True
     )
+    unit_cost = serializers.ReadOnlyField(
+        source="delivered_item.supplier_item.item_quotation.unit_price"
+    )
+
+    quantity_delivered = serializers.IntegerField(
+        source="delivered_item.quantity_delivered",
+        read_only=True
+    )
 
     ics_no = serializers.CharField(
         source="ics.ics_no",
@@ -1107,6 +1115,8 @@ class RequisitionerInventorySerializer(serializers.ModelSerializer):
             "item_description",
             "unit",
             "quantity",
+            "unit_cost",
+            "quantity_delivered",
             "date_issued",
             "ics_no",
             "po_no",
