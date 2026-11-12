@@ -82,13 +82,17 @@ class CustomUser(AbstractUser):
 
 class RecentActivity(models.Model):
     ACTIVITY_TYPES = (
-        ('CREATE', 'Created'),
-        ('UPDATE', 'Updated'),
-        ('DELETE', 'Deleted'),
+        ("Added", "Added"),
+        ("Updated", "Updated"),
+        ("Deleted", "Deleted"),
+        ("Registered", "Registered"),
+        ("Logged in", "Logged in"),
+        ("Logged out", "Logged out"),
+        ("Activated", "Activated"),
     )
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     user_role = models.CharField(max_length=100)
-    activity_type = models.CharField(max_length=10, choices=ACTIVITY_TYPES)
+    activity_type = models.CharField(max_length=20, choices=ACTIVITY_TYPES)
     timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.CharField(max_length=100)

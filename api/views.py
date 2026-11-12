@@ -6,6 +6,7 @@ from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, render
 from rest_framework import generics, status
+from .activity_logger import log_activity
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -169,6 +170,13 @@ class RegisterUserAPIView(generics.CreateAPIView):
             try:
                 user = serializer.save()
                 user.save()
+
+                log_activity(
+                    user=user,
+                    activity_type="Registered",
+                    target=user,
+                )
+
                 token = get_tokens_for_user(user)
 
                 # Get the current domain
@@ -230,6 +238,11 @@ class ActivateUserAPIView(APIView):
             user = get_object_or_404(User, pk=user_id)
             user.is_active = True
             user.save()
+            log_activity(
+                user=user,
+                activity_type="Activated",
+                target=user,
+            )
             return render(request, 'activation_success.html', status=status.HTTP_200_OK)
         except Http404:
             return render(request, 'activation_failed.html', status=status.HTTP_400_BAD_REQUEST)
@@ -288,6 +301,11 @@ class LoginTokenObtainPairView(TokenObtainPairView):
             # Update last login
             user.last_login = timezone.now()
             user.save()
+            log_activity(
+                user=user,
+                activity_type="Logged in",
+                target=user,
+            )
 
             # Add custom claims
             role = user.groups.first()
@@ -412,6 +430,11 @@ class OTPVerificationView(APIView):
                     # Update last login
                     user.last_login = timezone.now()
                     user.save()
+                    log_activity(
+                        user=user,
+                        activity_type="Logged in",
+                        target=user,
+                    )
 
                     user_data = {
                         "id": user.id,
@@ -815,6 +838,11 @@ class LoginTokenOfflineView(TokenObtainPairView):
             refresh = RefreshToken.for_user(user)
             user.last_login = timezone.now()
             user.save()
+            log_activity(
+                user=user,
+                activity_type="Logged in",
+                target=user,
+            )
 
             # Add custom claims to the token (email and role)
             role = user.groups.first()
@@ -857,6 +885,11 @@ class LogoutView(APIView):
 
             print(
                 "Refresh token blacklisted successfully"
+            )
+            log_activity(
+                user=request.user,
+                activity_type="Logged out",
+                target=request.user,
             )
             return Response(
                 {"message": "Logout successful"},
