@@ -2061,6 +2061,38 @@ class InventoryDeliveredItemsList(generics.ListAPIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+
+
+class RequisitionerInventoryList(generics.ListAPIView):
+    """
+    Returns only ICS items issued under the authenticated
+    requisitioner's purchase requests.
+    """
+
+    serializer_class = RequisitionerInventorySerializer
+
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            ICSItem.objects
+            .filter(
+                ics__purchase_order__purchase_request__requisitioner__user=self.request.user
+            )
+            .select_related(
+                "ics",
+                "ics__purchase_order",
+                "ics__purchase_order__purchase_request",
+                "delivered_item",
+                "delivered_item__supplier_item",
+                "delivered_item__supplier_item__item_quotation",
+                "delivered_item__supplier_item__item_quotation__item",
+            )
+            .order_by("-ics__date_issued")
+        )
+
+
 class StockItemsList(generics.ListCreateAPIView):
     """
     List all  Stocks Items , or create a new Stock Items

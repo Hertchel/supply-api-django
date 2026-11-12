@@ -1068,6 +1068,52 @@ class ICSItemSerializer(serializers.ModelSerializer):
         }
 
 
+
+class RequisitionerInventorySerializer(serializers.ModelSerializer):
+    item_description = serializers.CharField(
+        source="delivered_item.supplier_item.item_quotation.item.item_description",
+        read_only=True
+    )
+
+    unit = serializers.CharField(
+        source="delivered_item.supplier_item.item_quotation.item.unit",
+        read_only=True
+    )
+
+    ics_no = serializers.CharField(
+        source="ics.ics_no",
+        read_only=True
+    )
+
+    date_issued = serializers.DateTimeField(
+        source="ics.date_issued",
+        read_only=True
+    )
+
+    po_no = serializers.CharField(
+        source="ics.purchase_order.po_no",
+        read_only=True
+    )
+
+    pr_no = serializers.CharField(
+        source="ics.purchase_order.purchase_request.pr_no",
+        read_only=True
+    )
+
+    class Meta:
+        model = ICSItem
+        fields = [
+            "id",
+            "item_description",
+            "unit",
+            "quantity",
+            "date_issued",
+            "ics_no",
+            "po_no",
+            "pr_no",
+        ]
+
+
 class InventoryCustodianSlipSerializer(serializers.ModelSerializer):
     purchase_order = serializers.PrimaryKeyRelatedField(
         queryset=PurchaseOrder.objects.all(),
