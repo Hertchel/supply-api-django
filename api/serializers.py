@@ -1046,6 +1046,7 @@ class InventoryDeliveredItemsSerializer(serializers.ModelSerializer):
             "quantity",
             "unit_cost",
             "quantity_delivered",
+            "date_received",
         ]
 class ICSItemSerializer(serializers.ModelSerializer):
     delivered_item = serializers.PrimaryKeyRelatedField(
