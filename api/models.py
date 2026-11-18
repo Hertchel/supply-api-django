@@ -433,6 +433,46 @@ class ICSItem(models.Model):
         return f"{self.ics.ics_no} - {self.delivered_item.delivery_id}"
 
 
+
+class PropertyTagSequence(models.Model):
+    generation_date = models.DateField(unique=True)
+    last_number = models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.generation_date} - {self.last_number:04d}"
+
+
+class PropertyAsset(models.Model):
+    ics_item = models.ForeignKey(
+        ICSItem,
+        on_delete=models.PROTECT,
+        related_name="property_assets"
+    )
+
+    generation_date = models.DateField()
+    sequence_number = models.PositiveIntegerField()
+    unit_number = models.PositiveIntegerField()
+
+    letter_suffix = models.CharField(max_length=5)
+    property_number = models.CharField(max_length=255, unique=True)
+    location = models.CharField(max_length=255)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["ics_item", "unit_number"],
+                name="unique_property_asset_per_ics_unit"
+            )
+        ]
+        ordering = ["generation_date", "sequence_number", "unit_number"]
+
+    def __str__(self):
+        return self.property_number
+
+
+
 class StockItems(models.Model):
     stock_id = models.CharField(max_length=50, primary_key=True)
     inspection = models.ForeignKey(InspectionAndAcceptance, on_delete=models.CASCADE, related_name='stock_items')

@@ -153,6 +153,146 @@ def create_inventory_custodian_slip(request):
         status=status.HTTP_201_CREATED
     )
 
+
+class GeneratePropertyTagsView(APIView):
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, ics_no):
+        items = request.data.get("items", [])
+
+        if not isinstance(items, list) or not items:
+            return Response(
+                {"error": "At least one equipment item is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ics = get_object_or_404(
+            InventoryCustodianSlip,
+            ics_no=ics_no
+        )
+
+        # Your current distribution action marks the Purchase Request
+        # as Completed. Only allow tag generation after that action.
+        purchase_request = ics.purchase_order.purchase_request
+
+        if purchase_request.status != "Completed":
+            return Response(
+                {"error": "Property tags can only be generated after distribution."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        generation_date = timezone.localdate()
+
+        generated_tags = []
+
+        for item in items:
+            ics_item_id = item.get("ics_item_id")
+            location = item.get("location", "").strip()
+
+            if not ics_item_id:
+                return Response(
+                    {"error": "ICS item ID is required."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not location:
+                return Response(
+                    {"error": "Location is required for every equipment item."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if len(location) > 255:
+                return Response(
+                    {"error": "Location cannot exceed 255 characters."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            ics_item = get_object_or_404(
+                ICSItem,
+                pk=ics_item_id,
+                ics=ics
+            )
+
+            # Find physical units that have not yet received a property tag.
+            existing_units = set(
+                PropertyAsset.objects.filter(
+                    ics_item=ics_item
+                ).values_list("unit_number", flat=True)
+            )
+
+            missing_units = [
+                unit_number
+                for unit_number in range(1, ics_item.quantity + 1)
+                if unit_number not in existing_units
+            ]
+
+            # Do not consume a sequence number if this line is already tagged.
+            if not missing_units:
+                continue
+
+            # Lock the sequence row to prevent concurrent number allocation.
+            sequence, _ = PropertyTagSequence.objects.get_or_create(
+                generation_date=generation_date,
+                defaults={"last_number": 0}
+            )
+
+            sequence = PropertyTagSequence.objects.select_for_update().get(
+                pk=sequence.pk
+            )
+
+            sequence.last_number += 1
+            sequence.save(update_fields=["last_number"])
+
+            sequence_number = sequence.last_number
+
+            for unit_number in missing_units:
+                # Convert unit position to letters:
+                # 1=A, 2=B, ... 26=Z, 27=AA, 28=AB
+                number = unit_number
+                suffix = ""
+
+                while number > 0:
+                    number, remainder = divmod(number - 1, 26)
+                    suffix = chr(65 + remainder) + suffix
+
+                property_number = (
+                    f"{generation_date:%Y-%m-%d}-"
+                    f"{sequence_number:04d}"
+                    f"{suffix}-"
+                    f"{location}"
+                )
+
+                asset = PropertyAsset.objects.create(
+                    ics_item=ics_item,
+                    generation_date=generation_date,
+                    sequence_number=sequence_number,
+                    unit_number=unit_number,
+                    letter_suffix=suffix,
+                    property_number=property_number,
+                    location=location
+                )
+
+                generated_tags.append({
+                    "asset_id": asset.id,
+                    "ics_item_id": ics_item.id,
+                    "unit_number": unit_number,
+                    "property_number": asset.property_number,
+                    "location": asset.location
+                })
+
+        return Response(
+            {
+                "message": "Property tags generated successfully.",
+                "ics_no": ics.ics_no,
+                "generation_date": generation_date,
+                "generated_count": len(generated_tags),
+                "property_tags": generated_tags
+            },
+            status=status.HTTP_201_CREATED
+        )
+
 class RegisterUserAPIView(generics.CreateAPIView):
     """
     Register a new User
