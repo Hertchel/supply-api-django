@@ -443,8 +443,8 @@ class PropertyTagSequence(models.Model):
 
 
 class PropertyAsset(models.Model):
-    ics_item = models.ForeignKey(
-        ICSItem,
+    delivered_item = models.ForeignKey(
+        DeliveredItems,
         on_delete=models.PROTECT,
         related_name="property_assets"
     )
@@ -462,15 +462,14 @@ class PropertyAsset(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["ics_item", "unit_number"],
-                name="unique_property_asset_per_ics_unit"
+                fields=["delivered_item", "unit_number"],
+                name="unique_property_asset_per_delivery_unit"
             )
         ]
         ordering = ["generation_date", "sequence_number", "unit_number"]
 
     def __str__(self):
         return self.property_number
-
 
 
 class StockItems(models.Model):

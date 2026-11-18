@@ -159,7 +159,7 @@ class GeneratePropertyTagsView(APIView):
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
-    def post(self, request, ics_no):
+    def post(self, request):
         items = request.data.get("items", [])
 
         if not isinstance(items, list) or not items:
@@ -168,38 +168,22 @@ class GeneratePropertyTagsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        ics = get_object_or_404(
-            InventoryCustodianSlip,
-            ics_no=ics_no
-        )
-
-        # Your current distribution action marks the Purchase Request
-        # as Completed. Only allow tag generation after that action.
-        purchase_request = ics.purchase_order.purchase_request
-
-        if purchase_request.status != "Completed":
-            return Response(
-                {"error": "Property tags can only be generated after distribution."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         generation_date = timezone.localdate()
-
         generated_tags = []
 
         for item in items:
-            ics_item_id = item.get("ics_item_id")
+            delivery_id = item.get("delivery_id")
             location = item.get("location", "").strip()
 
-            if not ics_item_id:
+            if not delivery_id:
                 return Response(
-                    {"error": "ICS item ID is required."},
+                    {"error": "Delivery ID is required."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             if not location:
                 return Response(
-                    {"error": "Location is required for every equipment item."},
+                    {"error": "Equipment location is required."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
@@ -209,30 +193,46 @@ class GeneratePropertyTagsView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            ics_item = get_object_or_404(
-                ICSItem,
-                pk=ics_item_id,
-                ics=ics
+            delivered_item = get_object_or_404(
+                DeliveredItems,
+                pk=delivery_id
             )
 
-            # Find physical units that have not yet received a property tag.
+            # Only allow property tagging after actual distribution.
+            purchase_request = (
+                delivered_item.inspection.purchase_order.purchase_request
+            )
+
+            if purchase_request.status != "Completed":
+                return Response(
+                    {
+                        "error": (
+                            f"Property tags cannot be generated for "
+                            f"delivery {delivery_id} before distribution."
+                        )
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             existing_units = set(
                 PropertyAsset.objects.filter(
-                    ics_item=ics_item
+                    delivered_item=delivered_item
                 ).values_list("unit_number", flat=True)
             )
 
             missing_units = [
                 unit_number
-                for unit_number in range(1, ics_item.quantity + 1)
+                for unit_number in range(
+                    1,
+                    delivered_item.quantity_delivered + 1
+                )
                 if unit_number not in existing_units
             ]
 
-            # Do not consume a sequence number if this line is already tagged.
             if not missing_units:
                 continue
 
-            # Lock the sequence row to prevent concurrent number allocation.
+            # Get the next sequence number for this generation date.
             sequence, _ = PropertyTagSequence.objects.get_or_create(
                 generation_date=generation_date,
                 defaults={"last_number": 0}
@@ -248,8 +248,6 @@ class GeneratePropertyTagsView(APIView):
             sequence_number = sequence.last_number
 
             for unit_number in missing_units:
-                # Convert unit position to letters:
-                # 1=A, 2=B, ... 26=Z, 27=AA, 28=AB
                 number = unit_number
                 suffix = ""
 
@@ -265,7 +263,7 @@ class GeneratePropertyTagsView(APIView):
                 )
 
                 asset = PropertyAsset.objects.create(
-                    ics_item=ics_item,
+                    delivered_item=delivered_item,
                     generation_date=generation_date,
                     sequence_number=sequence_number,
                     unit_number=unit_number,
@@ -276,7 +274,7 @@ class GeneratePropertyTagsView(APIView):
 
                 generated_tags.append({
                     "asset_id": asset.id,
-                    "ics_item_id": ics_item.id,
+                    "delivery_id": delivered_item.delivery_id,
                     "unit_number": unit_number,
                     "property_number": asset.property_number,
                     "location": asset.location
@@ -285,7 +283,6 @@ class GeneratePropertyTagsView(APIView):
         return Response(
             {
                 "message": "Property tags generated successfully.",
-                "ics_no": ics.ics_no,
                 "generation_date": generation_date,
                 "generated_count": len(generated_tags),
                 "property_tags": generated_tags

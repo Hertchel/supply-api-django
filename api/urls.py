@@ -72,7 +72,7 @@ urlpatterns = [
     path('inspection-report/<str:pk>', InspectionAndAcceptanceDetail.as_view()),
 
     path("inventory-custodian-slips/create/", create_inventory_custodian_slip,),
-    path("ics/<str:ics_no>/generate-property-tags/", GeneratePropertyTagsView.as_view(), name="generate-property-tags"),
+    path("items-delivered/generate-property-tags/", GeneratePropertyTagsView.as_view(), name="generate-property-tags"),
     
     path('requisition-slip/', RequisitionIssueSlipList.as_view()),
     path('requisition-slip/<str:pk>', RequisitionIssueSlipDetail.as_view()),
