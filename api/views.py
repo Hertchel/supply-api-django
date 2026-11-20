@@ -280,15 +280,43 @@ class GeneratePropertyTagsView(APIView):
                     "location": asset.location
                 })
 
+        
+        # Retrieve ALL property tags for the selected deliveries,
+        # including previously generated tags.
+        delivery_ids = [
+            item["delivery_id"]
+            for item in items
+        ]
+
+        all_assets = PropertyAsset.objects.filter(
+            delivered_item_id__in=delivery_ids
+        ).order_by(
+            "generation_date",
+            "sequence_number",
+            "unit_number"
+        )
+
+        property_tags = [
+            {
+                "asset_id": asset.id,
+                "delivery_id": asset.delivered_item_id,
+                "unit_number": asset.unit_number,
+                "property_number": asset.property_number,
+                "location": asset.location,
+            }
+            for asset in all_assets
+        ]
+
         return Response(
             {
-                "message": "Property tags generated successfully.",
+                "message": "Property tags retrieved successfully.",
                 "generation_date": generation_date,
                 "generated_count": len(generated_tags),
-                "property_tags": generated_tags
+                "property_tags": property_tags,
             },
-            status=status.HTTP_201_CREATED
+            status=status.HTTP_200_OK
         )
+
 
 class RegisterUserAPIView(generics.CreateAPIView):
     """
