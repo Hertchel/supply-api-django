@@ -1684,34 +1684,71 @@ class PurchaseRequestMOPUpdateView(APIView):
             return Response({"error": "Purchase Request not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-
 class PurchaseRequestStatusUpdateView(APIView):
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
     def patch(self, request, pk):
-
         try:
-
             purchase_request = PurchaseRequest.objects.get(pk=pk)
 
             new_status = request.data.get("status")
+            delivery_period_days = request.data.get("delivery_period_days")
+
+            # Require a delivery period when receiving a PR.
+            if new_status == "Received by the Procurement":
+                if delivery_period_days is None:
+                    return Response(
+                        {"error": "Delivery period is required when receiving a purchase request."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                try:
+                    delivery_period_days = int(delivery_period_days)
+                except (TypeError, ValueError):
+                    return Response(
+                        {"error": "Delivery period must be a valid whole number."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if delivery_period_days <= 0:
+                    return Response(
+                        {"error": "Delivery period must be greater than zero."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Keep delivery_period_days out of the serializer input.
+            # It is saved directly to the model below.
+            serializer_data = request.data.copy()
+            serializer_data.pop("delivery_period_days", None)
 
             serializer = PurchaseRequestSerializer(
                 purchase_request,
-                data=request.data,
+                data=serializer_data,
                 partial=True
             )
 
             if serializer.is_valid():
+                serializer.save(updated_at=timezone.now())
 
-                serializer.save(
-                    updated_at=timezone.now()
+                # Save the selected delivery period.
+                if new_status == "Received by the Procurement":
+                    purchase_request.delivery_period_days = delivery_period_days
+                    purchase_request.save(
+                        update_fields=[
+                            "delivery_period_days",
+                            "updated_at"
+                        ]
+                    )
+
+                response_data = serializer.data
+                response_data["delivery_period_days"] = (
+                    purchase_request.delivery_period_days
                 )
 
                 return Response(
-                    serializer.data,
+                    response_data,
                     status=status.HTTP_200_OK
                 )
 
@@ -1721,27 +1758,10 @@ class PurchaseRequestStatusUpdateView(APIView):
             )
 
         except PurchaseRequest.DoesNotExist:
-
             return Response(
                 {"error": "Purchase Request not found"},
                 status=status.HTTP_404_NOT_FOUND
-            )
-
-    """
-    def patch(self, request, pk):
-        try:
-            purchase_request = PurchaseRequest.objects.get(pk=pk)
-            serializer = PurchaseRequestSerializer(purchase_request, data=request.data, partial=True)
-            if serializer.is_valid():
-                purchase_request.updated_at = timezone.now()
-                purchase_request.save()
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except PurchaseRequest.DoesNotExist:
-            return Response({"error": "Purchase Order not found"}, status=status.HTTP_404_NOT_FOUND)
-    """
-        
+            ) 
 
 class ItemsFilterListView(ListAPIView):
     """

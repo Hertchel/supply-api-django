@@ -379,6 +379,7 @@ class PurchaseRequestSerializer(serializers.ModelSerializer):
             'office_details',
             'purpose',
             'status',
+            'delivery_period_days', 
             'requisitioner',
             'requisitioner_details',
             'reviewed_by',

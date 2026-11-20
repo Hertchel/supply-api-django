@@ -159,6 +159,7 @@ class PurchaseRequest(models.Model):
     fund_cluster = models.CharField(max_length=50, null=True, blank=True)
     purpose = models.CharField(max_length=255)
     status = models.CharField(max_length=255, default='Pending for Approval')
+    delivery_period_days = models.PositiveIntegerField(null=True, blank=True, help_text="Expected delivery period in days.")
     requisitioner = models.ForeignKey(Requesitioner, related_name="purchase_requests", on_delete=models.CASCADE)
     campus_director = models.ForeignKey(CampusDirector, related_name="purchase_requests", on_delete=models.CASCADE)
     mode_of_procurement = models.CharField(max_length=100)
