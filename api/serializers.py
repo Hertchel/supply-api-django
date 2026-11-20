@@ -608,7 +608,7 @@ class ItemSerializer(serializers.ModelSerializer):
         
 
 class RequestForQuotationSerializer(serializers.ModelSerializer):
-
+    pr_details = PurchaseRequestSerializer(source='purchase_request', read_only=True)
     supplier_profile_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
     class Meta:
         model = RequestForQuotation
@@ -1190,7 +1190,17 @@ class RequisitionIssueSlipSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class RequestForQuotationDetailSerializer(serializers.ModelSerializer):
-    items = ItemQuotationSerializer(source="item_quotations", many=True, read_only=True)
+
+    pr_details = PurchaseRequestSerializer(
+        source='purchase_request',
+        read_only=True
+    )
+
+    items = ItemQuotationSerializer(
+        source="item_quotations",
+        many=True,
+        read_only=True
+    )
 
     class Meta:
         model = RequestForQuotation
