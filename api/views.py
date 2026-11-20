@@ -2049,24 +2049,99 @@ class PurchaseOrderStatusUpdateView(APIView):
         except PurchaseOrder.DoesNotExist:
             return Response({"error": "Purchase Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
+
 class PurchaseOrderItemList(generics.ListCreateAPIView):
     """
-    List all Purchase Order Item, or create a new Purchase Order Item
+    List or create Purchase Order Items.
+    Optimized to reduce repeated database queries.
     """
-    queryset = PurchaseOrderItem.objects.all()
     serializer_class = PurchaseOrderItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return PurchaseOrderItem.objects.select_related(
+            # Direct relationships
+            "purchase_request",
+            "purchase_order",
+            "supplier_item",
 
-class PurchaseOrderItemDetail(generics.RetrieveUpdateDestroyAPIView):
-    """
-    Retrieve, Update or Delete a Purchase Order Item instance
-    """
-    queryset = PurchaseOrderItem.objects.all()
+            # Purchase Request relationships
+            "purchase_request__requisitioner",
+            "purchase_request__campus_director",
+            "purchase_request__reviewed_by",
+            "purchase_request__office",
+
+            # Purchase Order relationships
+            "purchase_order__purchase_request",
+            "purchase_order__request_for_quotation",
+            "purchase_order__abstract_of_quotation",
+            "purchase_order__supplier",
+
+            # Purchase Order's supplier relationships
+            "purchase_order__supplier__aoq",
+            "purchase_order__supplier__rfq",
+
+            # Purchase Order's PR relationships
+            "purchase_order__purchase_request__requisitioner",
+            "purchase_order__purchase_request__campus_director",
+            "purchase_order__purchase_request__reviewed_by",
+            "purchase_order__purchase_request__office",
+
+            # Supplier Item relationships
+            "supplier_item__supplier",
+            "supplier_item__rfq",
+            "supplier_item__item_quotation",
+
+            # Supplier Item's supplier relationships
+            "supplier_item__supplier__aoq",
+            "supplier_item__supplier__rfq",
+
+            # Quoted Item relationships
+            "supplier_item__item_quotation__item",
+            "supplier_item__item_quotation__item__purchase_request",
+            "supplier_item__item_quotation__item__purchase_request__requisitioner",
+            "supplier_item__item_quotation__item__purchase_request__campus_director",
+            "supplier_item__item_quotation__item__purchase_request__reviewed_by",
+            "supplier_item__item_quotation__item__purchase_request__office",
+        )
+
+
+class PurchaseOrderItemDetail(
+    generics.RetrieveUpdateDestroyAPIView
+):
     serializer_class = PurchaseOrderItemSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PurchaseOrderItem.objects.select_related(
+            "purchase_request",
+            "purchase_order",
+            "supplier_item",
+            "purchase_request__requisitioner",
+            "purchase_request__campus_director",
+            "purchase_request__reviewed_by",
+            "purchase_request__office",
+            "purchase_order__purchase_request",
+            "purchase_order__request_for_quotation",
+            "purchase_order__abstract_of_quotation",
+            "purchase_order__supplier",
+            "purchase_order__supplier__aoq",
+            "purchase_order__supplier__rfq",
+            "supplier_item__supplier",
+            "supplier_item__supplier__aoq",
+            "supplier_item__supplier__rfq",
+            "supplier_item__rfq",
+            "supplier_item__item_quotation",
+            "supplier_item__item_quotation__item",
+            "supplier_item__item_quotation__item__purchase_request",
+            "supplier_item__item_quotation__item__purchase_request__requisitioner",
+            "supplier_item__item_quotation__item__purchase_request__campus_director",
+            "supplier_item__item_quotation__item__purchase_request__reviewed_by",
+            "supplier_item__item_quotation__item__purchase_request__office",
+        )
+
 
 
 class BACDailyReportView(APIView):
