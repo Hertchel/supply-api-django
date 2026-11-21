@@ -760,17 +760,7 @@ class AbstractOfQuotationSerializer(serializers.ModelSerializer):
     
     supplier_quotes = serializers.SerializerMethodField()
 
-    
-def get_supplier_quotes(self, obj):
-    # Reuse serialized supplier quotes for the same Purchase Request.
-    cache = self.context.setdefault(
-        "_aoq_supplier_quotes_cache",
-        {}
-    )
-
-    cache_key = obj.purchase_request_id
-
-    if cache_key not in cache:
+    def get_supplier_quotes(self, obj):
         quotes = (
             SupplierItem.objects
             .filter(
@@ -790,14 +780,11 @@ def get_supplier_quotes(self, obj):
             .order_by("supplier__name")
         )
 
-        cache[cache_key] = AOQQuotedItemSerializer(
+        return AOQQuotedItemSerializer(
             quotes,
             many=True,
             context=self.context,
         ).data
-
-    return cache[cache_key]
-
 
 class BACMemberSerializer(serializers.ModelSerializer):
     class Meta:
