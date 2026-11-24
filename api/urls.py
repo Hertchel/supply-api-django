@@ -82,6 +82,7 @@ urlpatterns = [
     path('requisitioner-dashboard/<uuid:token>/', RequisitionerDashboardView.as_view()),
     path('requisitioner/dashboard/', AuthenticatedRequisitionerDashboardView.as_view()),
     path('requisitioner/inventory/', RequisitionerInventoryList.as_view(), name='requisitioner-inventory'),
+    path('requisitioner/property/', RequisitionerPropertyItemsList.as_view(), name='requisitioner-property-items',),
 
 
     path('daily-report/bac', BACDailyReportView.as_view()),

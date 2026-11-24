@@ -194,8 +194,11 @@ class GeneratePropertyTagsView(APIView):
                 )
 
             delivered_item = get_object_or_404(
-                DeliveredItems,
-                pk=delivery_id
+                DeliveredItems.objects.select_related(
+                    "inspection__purchase_order__purchase_request__requisitioner"
+                ),
+                pk=delivery_id,
+                inspection__purchase_order__purchase_request__requisitioner__user=request.user,
             )
 
             # Only allow property tagging after actual distribution.
@@ -2332,6 +2335,24 @@ class RequisitionerInventoryList(generics.ListAPIView):
             "supplier_item__item_quotation__item",
         ).filter(
             ics_items__ics__purchase_order__purchase_request__requisitioner__user=self.request.user
+        ).distinct()
+
+class RequisitionerPropertyItemsList(generics.ListAPIView):
+    """
+    Return delivered items belonging to the authenticated requisitioner
+    that are eligible for property tagging.
+    """
+    serializer_class = DeliveredItemsSerializer
+    authentication_classes = [CookieJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return DeliveredItems.objects.select_related(
+            "inspection__purchase_order__purchase_request__requisitioner",
+            "supplier_item__item_quotation__item",
+        ).filter(
+            inspection__purchase_order__purchase_request__requisitioner__user=self.request.user,
+            inspection__purchase_order__purchase_request__status="Completed",
         ).distinct()
 class StockItemsList(generics.ListCreateAPIView):
     """
