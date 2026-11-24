@@ -1977,38 +1977,30 @@ class SupplierItemDetail(generics.RetrieveUpdateDestroyAPIView):
 
 
 
+
 class PurchaseOrderList(generics.ListCreateAPIView):
-    """
-    List all Purchase Orders or create a new Purchase Order.
-    Related records are preloaded to reduce database queries.
-    """
     queryset = (
         PurchaseOrder.objects.select_related(
-            # Direct Purchase Order relationships
             "purchase_request",
             "request_for_quotation",
             "abstract_of_quotation",
             "supplier",
 
-            # Purchase Request details
             "purchase_request__requisitioner",
             "purchase_request__campus_director",
             "purchase_request__office",
             "purchase_request__reviewed_by",
 
-            # Abstract of Quotation and its Purchase Request
             "abstract_of_quotation__purchase_request",
             "abstract_of_quotation__purchase_request__requisitioner",
             "abstract_of_quotation__purchase_request__campus_director",
             "abstract_of_quotation__purchase_request__office",
             "abstract_of_quotation__purchase_request__reviewed_by",
 
-            # Supplier details
             "supplier__supplier_profile",
             "supplier__rfq",
             "supplier__aoq",
 
-            # Supplier's Abstract of Quotation and Purchase Request
             "supplier__aoq__purchase_request",
             "supplier__aoq__purchase_request__requisitioner",
             "supplier__aoq__purchase_request__campus_director",
@@ -2021,6 +2013,37 @@ class PurchaseOrderList(generics.ListCreateAPIView):
     serializer_class = PurchaseOrderSerializer
     authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        query_count = 0
+        query_time = 0
+
+        def query_logger(execute, sql, params, many, context):
+            nonlocal query_count, query_time
+
+            start = time.perf_counter()
+
+            try:
+                return execute(sql, params, many, context)
+            finally:
+                query_count += 1
+                query_time += time.perf_counter() - start
+
+        start = time.perf_counter()
+
+        with connection.execute_wrapper(query_logger):
+            response = super().list(request, *args, **kwargs)
+
+        total_time = time.perf_counter() - start
+
+        print("\n========== PURCHASE ORDER PERFORMANCE ==========")
+        print(f"Total request processing: {total_time:.3f} seconds")
+        print(f"Database queries: {query_count}")
+        print(f"Total SQL execution time: {query_time:.3f} seconds")
+        print(f"Other processing time: {total_time - query_time:.3f} seconds")
+        print("================================================\n")
+
+        return response
 
 
 class PurchaseOrderDetail(generics.RetrieveUpdateDestroyAPIView):
